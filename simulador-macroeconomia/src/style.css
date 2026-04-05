@@ -1,0 +1,183 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply antialiased font-sans bg-gray-50 text-gray-900;
+  }
+}
+
+@layer components {
+  /* Control Groups - Old Style (mantido para compatibilidade) */
+  .control-group {
+    @apply bg-gray-50 p-3 rounded-lg border border-gray-100 shadow-sm transition-all hover:shadow-md;
+  }
+  
+  /* Enhanced Control Groups */
+  .control-group-enhanced {
+    @apply transition-all duration-200;
+  }
+  
+  .control-group-enhanced:hover {
+    transform: translateY(-1px);
+  }
+  
+  .control-group-enhanced-small {
+    @apply transition-all duration-200;
+  }
+  
+  /* Enhanced Sliders */
+  .slider-enhanced {
+    @apply shadow-sm;
+  }
+  
+  .slider-enhanced:hover {
+    @apply shadow-md;
+  }
+}
+
+/* Custom thumb styling for WebKit - Enhanced */
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  @apply h-5 w-5 rounded-full bg-white border-2 border-mackenzie-green shadow-md cursor-pointer;
+  margin-top: -7px;
+  transition: all 0.2s ease;
+}
+
+input[type=range]::-webkit-slider-thumb:hover {
+  @apply scale-110 shadow-lg;
+  border-width: 3px;
+}
+
+input[type=range]::-webkit-slider-thumb:active {
+  @apply scale-95;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+  @apply w-full h-2.5 bg-gray-200 rounded-full cursor-pointer;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+input[type=range]::-moz-range-thumb {
+  @apply h-5 w-5 rounded-full bg-white border-2 border-mackenzie-green shadow-md cursor-pointer;
+  transition: all 0.2s ease;
+}
+
+input[type=range]::-moz-range-thumb:hover {
+  @apply scale-110 shadow-lg;
+  border-width: 3px;
+}
+
+input[type=range]::-moz-range-track {
+  @apply w-full h-2.5 bg-gray-200 rounded-full cursor-pointer;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Smaller sliders for parameters */
+input[type=range].h-1\.5::-webkit-slider-thumb {
+  @apply h-4 w-4;
+  margin-top: -5px;
+}
+
+input[type=range].h-1\.5::-moz-range-thumb {
+  @apply h-4 w-4;
+}
+
+/* Scrollbar customization for right panel - Enhanced */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-400 rounded-full;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500;
+}
+
+/* Estilo do gráfico - fundo quadriculado acadêmico */
+#macroChart {
+  background-color: #ffffff;
+  background-image: 
+    linear-gradient(rgba(229, 231, 235, 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(229, 231, 235, 0.5) 1px, transparent 1px);
+  background-size: 20px 20px;
+  border-radius: 8px;
+}
+
+/* Container do gráfico */
+#graph-container {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+}
+
+/* Smooth transitions for all interactive elements */
+button, input[type=range], .control-group, .control-group-enhanced, .control-group-enhanced-small {
+  transition: all 0.2s ease;
+}
+
+/* Focus styles for accessibility */
+button:focus-visible, input[type=range]:focus-visible {
+  @apply outline-none ring-2 ring-mackenzie-green ring-offset-2;
+}
+
+/* Animation for value displays */
+.val-display {
+  transition: all 0.15s ease;
+}
+
+.val-display:hover {
+  @apply scale-105;
+}
+
+/* Gradient backgrounds */
+.bg-gradient-enhanced {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+/* Chart container enhancement */
+#macroChart {
+  @apply w-full h-full;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .control-group-enhanced,
+  .control-group-enhanced-small {
+    @apply text-sm;
+  }
+}
+
+
+/* Custom scrollbar for explanation boxes */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 8px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Firefox scrollbar */
+.overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.05);
+}

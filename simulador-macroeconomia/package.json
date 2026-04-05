@@ -1,0 +1,25 @@
+{
+  "name": "simulador-macroeconomia",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node src/tests/model.test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "autoprefixer": "^10.4.19",
+    "chart.js": "^4.4.2",
+    "gsap": "^3.12.5",
+    "html2canvas": "^1.4.1",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.4",
+    "vite": "^5.2.11"
+  }
+}
