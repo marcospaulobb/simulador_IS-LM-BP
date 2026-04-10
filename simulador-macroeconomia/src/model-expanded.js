@@ -53,7 +53,7 @@ export function computeEquilibriumExpanded(params, capitalMobility, isFloating) 
 
   // Economia fechada (caso especial)
   if (capitalMobility === 'closed') {
-    return computeClosedEconomy(A, c, b, k, h, M, P);
+    return computeClosedEconomy(A, c, b, k, h, M, P, L0);
   }
 
   // Economia aberta
@@ -72,7 +72,7 @@ export function computeEquilibriumExpanded(params, capitalMobility, isFloating) 
 /**
  * Economia fechada (IS-LM clássico)
  */
-function computeClosedEconomy(A, c, b, k, h, M, P) {
+function computeClosedEconomy(A, c, b, k, h, M, P, L0) {
   const MReal = M / P;
   const denominator = b * k + h * (1 - c);
   
@@ -94,7 +94,7 @@ function computeClosedEconomy(A, c, b, k, h, M, P) {
  * Mobilidade perfeita de capitais (i = i*)
  */
 function computePerfectMobility(params, A, isFloating) {
-  const { c, b, k, h, m1, x1, x2, m2, X0, M0, Ystar, istar, E, M, P } = params;
+  const { c, b, k, h, m1, x1, x2, m2, X0, M0, L0, Ystar, istar, E, M, P } = params;
   
   // Taxa de juros é determinada externamente
   const i = istar;
@@ -145,7 +145,7 @@ function computePerfectMobility(params, A, isFloating) {
  * Mobilidade imperfeita de capitais (BP positivamente inclinada)
  */
 function computeImperfectMobility(params, A, isFloating) {
-  const { c, b, k, h, m1, x1, x2, m2, f, X0, M0, K0, Ystar, istar, E, M, P } = params;
+  const { c, b, k, h, m1, x1, x2, m2, f, X0, M0, L0, K0, Ystar, istar, E, M, P } = params;
   const MReal = M / P;
   const netExportSensitivity = x2 + m2;
 

@@ -29,89 +29,66 @@ export class ExplanationEngine {
   }
 
   /**
-   * Default explanation with equilibrium values
+   * Default explanation with equilibrium values and theoretical drivers
    */
   getDefaultExplanation(isOpen, isFloating, eq, params, capitalMobility) {
     let html = '';
+    const istar = params?.rstar?.toFixed(2) || params?.istar?.toFixed(2) || 'i*';
+    const Ystar = params?.Ystar?.toFixed(0) || 'Y*';
 
     // ── IS-LM Fechado ──
     if (!isOpen) {
       html = `<strong>📊 IS-LM — Economia Fechada</strong><br><br>
-Sem comércio internacional nem fluxos de capital. O equilíbrio ocorre onde o mercado de bens (IS) cruza o mercado monetário (LM).<br><br>
-<strong>Política Fiscal:</strong> EFICAZ — Desloca IS, mas com efeito crowding-out sobre o investimento.<br>
-<strong>Política Monetária:</strong> EFICAZ — Desloca LM, altera juros e estimula investimento.`;
+O equilíbrio ocorre no encontro entre o mercado de bens (IS) e o mercado monetário (LM).<br><br>
+<strong>Drivers Principais:</strong> Consumo ($c$), Investimento ($b$) e Moeda ($k, h$).<br>
+<strong>Eficiência:</strong> A Política Fiscal gera <em>Crowding Out</em> (aumento de juros reduz investimento privado).`;
     }
 
     // ── IS-LM-BP: Mobilidade Perfeita ──
     else if (capitalMobility === 'perfect') {
-      const istar = params?.rstar?.toFixed(2) || params?.istar?.toFixed(2) || 'i*';
-      if (isFloating) {
-        html = `<strong>📊 IS-LM-BP — Mobilidade Perfeita de Capitais · Câmbio Flutuante</strong><br><br>
-<em>Ativos domésticos/estrangeiros perfeitamente substituíveis; equilíbrio BP só depende de i = i* = ${istar}%.</em><br><br>
-<strong>🔵 Política Fiscal:</strong> <span style="color:#dc2626">INEFICAZ</span><br>
-→ Expansão IS eleva i acima de i* → entrada de capitais aprecia e (câmbio cai) → reduz exportações líquidas (Xn) → IS retorna ao ponto inicial.<br><br>
-<strong>🟢 Política Monetária:</strong> <span style="color:#16a34a">SUPER EFICAZ</span><br>
-→ Expansão LM baixa i abaixo de i* → saída de capitais deprecia e → eleva Xn → IS desloca à direita → Y aumenta fortemente via canal cambial.`;
-      } else {
-        html = `<strong>📊 IS-LM-BP — Mobilidade Perfeita de Capitais · Câmbio Fixo</strong><br><br>
-<em>Ativos domésticos/estrangeiros perfeitamente substituíveis; equilíbrio BP só depende de i = i* = ${istar}%.</em><br><br>
-<strong>🔵 Política Fiscal:</strong> <span style="color:#16a34a">EFICAZ</span><br>
-→ Expansão IS eleva i acima de i* → entrada de capitais pressiona valorização → BC compra moeda para fixar e, expandindo M automaticamente → LM desloca à direita, sustentando Y maior.<br><br>
-<strong>🟢 Política Monetária:</strong> <span style="color:#dc2626">INEFICAZ</span><br>
-→ Expansão LM baixa i abaixo de i* → saída de capitais pressiona desvalorização → BC vende reservas, reabsorvendo moeda → LM retorna ao ponto inicial.`;
-      }
+      html = `<strong>📊 Mobilidade Perfeita de Capitais ($f \\to \\infty$)</strong><br><br>
+O capital flui instantaneamente buscando o maior retorno. A economia é forçada à paridade: $i = i^* = ${istar}%.$<br><br>
+<strong>Parâmetros Críticos:</strong><br>
+• <strong>Juros Externos ($i^*$):</strong> Define o equilíbrio de toda a economia.<br>
+• <strong>Regime Cambial:</strong> Em câmbio flutuante, a Balança Comercial (NX) ajusta a IS. Em câmbio fixo, a oferta de moeda (M) ajusta a LM.<br><br>
+<em><strong>Regra de Ouro:</strong> Com mobilidade perfeita e câmbio flutuante, a política fiscal é nula e a monetária é soberana.</em>`;
     }
 
     // ── IS-LM-BP: Mobilidade Imperfeita ──
     else if (capitalMobility === 'imperfect') {
-      if (isFloating) {
-        html = `<strong>📊 IS-LM-BP — Mobilidade Imperfeita de Capitais · Câmbio Flutuante</strong><br><br>
-<em>Equilíbrio BP depende de Y (transações correntes) e i (capitais); inclinação positiva reflete elasticidades.</em><br><br>
-<strong>🔵 Política Fiscal:</strong> <span style="color:#16a34a">MODERADAMENTE EFICAZ</span><br>
-→ Expansão IS eleva Y e i → apreciação parcial de e reduz Xn, mas não totalmente → equilíbrio em Y e i mais altos, com ajuste cambial parcial.<br><br>
-<strong>🟢 Política Monetária:</strong> <span style="color:#16a34a">MAIS EFICAZ QUE FISCAL</span><br>
-→ Expansão LM baixa i → saída de capitais deprecia e → Xn sobe → maior ajuste em Y. Equilíbrio com volatilidade cambial maior.`;
-      } else {
-        html = `<strong>📊 IS-LM-BP — Mobilidade Imperfeita de Capitais · Câmbio Fixo</strong><br><br>
-<em>Equilíbrio BP depende de Y (transações correntes) e i (capitais); inclinação positiva reflete elasticidades.</em><br><br>
-<strong>🔵 Políticas Mistas:</strong> <span style="color:#16a34a">EFICAZES</span><br>
-→ Expansão fiscal eleva Y e i → entrada de capitais pressiona valorização → BC intervém vendendo reservas para fixar e → expansão moderada de Y com juros mais altos.<br><br>
-<strong>🟢 Política Monetária:</strong> PARCIALMENTE EFICAZ<br>
-→ Queda de i aumenta déficits BP (saída de capitais), mas Y cresce moderadamente. BC intervém com reservas para manter e fixo.`;
-      }
+      const f = params?.f?.toFixed(0) || 'f';
+      const m1 = params?.m1?.toFixed(2) || 'm1';
+      html = `<strong>📊 Mobilidade Imperfeita de Capitais</strong><br><br>
+A curva BP tem inclinação positiva ($m_1/f$). O equilíbrio externo depende da compensação entre comércio e fluxos financeiros.<br><br>
+<strong>Engrenagens do Equilíbrio:</strong><br>
+• <strong>Sensibilidade ($f$ = ${f}):</strong> Quanto maior $f$, mais plana é a BP (mais próxima da paridade de juros).<br>
+• <strong>Importações ($m_1$ = ${m1}):</strong> Quanto maior a propensão a importar, mais inclinada é a BP (exige mais juros para compensar o déficit comercial).<br><br>
+<em><strong>Dinâmica:</strong> Choques internos (ex: ↑G) elevam juros e renda, gerando um ajuste parcial via câmbio ou reservas.</em>`;
     }
 
     // ── IS-LM-BP: Sem Mobilidade (BP Vertical) ──
     else if (capitalMobility === 'zero') {
-      if (isFloating) {
-        html = `<strong>📊 IS-LM-BP — Sem Mobilidade de Capitais · Câmbio Flutuante</strong><br><br>
-<em>Sem fluxos de capitais; BP = apenas transações correntes Xn(Y, e). BP vertical.</em><br><br>
-<strong>🔵 Política Fiscal:</strong> <span style="color:#dc2626">INEFICAZ</span><br>
-→ Expansão IS aumenta Y → piora BP (mais importações) → deprecia e, restaurando Xn → IS retorna e Y muda pouco.<br><br>
-<strong>🟢 Política Monetária:</strong> <span style="color:#16a34a">EFICAZ</span><br>
-→ Expansão LM baixa i → deprecia e → eleva Xn → IS desloca à direita → Y aumenta. Ajuste se dá inteiramente pelo câmbio.`;
-      } else {
-        html = `<strong>📊 IS-LM-BP — Sem Mobilidade de Capitais · Câmbio Fixo</strong><br><br>
-<em>Sem fluxos de capitais; BP = apenas transações correntes Xn(Y, e). BP vertical.</em><br><br>
-<strong>🔵 Política Fiscal:</strong> <span style="color:#16a34a">EFICAZ</span><br>
-→ Expansão IS aumenta Y → piora BP → BC intervém com reservas para fixar e → Y sobe mas com perda de reservas.<br><br>
-<strong>🟢 Política Monetária:</strong> LIMITADA<br>
-→ Expansão LM pode conflitar com nível de reservas do BC. Se reservas forem baixas, a sustentação do câmbio é comprometida.`;
-      }
+      html = `<strong>📊 Sem Mobilidade de Capitais ($f \\to 0$)</strong><br><br>
+O fluxo financeiro é inexistente. O Balanço de Pagamentos depende exclusivamente do saldo comercial ($X = M$).<br><br>
+<strong>Vetor de Equilíbrio:</strong><br>
+• <strong>Setor Externo ($Y^*, X_0, M_0$):</strong> A posição da BP vertical é definida pela competitividade de nossas exportações.<br>
+• <strong>Renda Externa ($Y^*$ = ${Ystar}):</strong> Um crescimento global desloca a BP para a direita, permitindo maior crescimento interno sem crise cambial.<br><br>
+<em><strong>Foco:</strong> A taxa de juros perde o poder de atrair dólares. O equilíbrio é ditado pela capacidade de exportar e pela contenção de importações.</em>`;
     }
 
     // Fallback
     else {
-      html = `<strong>📊 Modelo IS-LM-BP</strong><br><br>Selecione uma combinação de Mobilidade e Câmbio para ver a análise detalhada.`;
+      html = `<strong>📊 Modelo IS-LM-BP</strong><br><br>Selecione um regime para ver a análise técnica.`;
     }
 
-    // Equilibrium values
+    // Current Equilibrium values (Footer)
     if (eq) {
-      html += `<br><br><strong>🎯 Equilíbrio Atual:</strong><br>`;
-      html += `• Renda (Y): ${Math.round(eq.Y)}<br>`;
-      html += `• Taxa de Juros (i): ${eq.r?.toFixed(2)}%<br>`;
-      if (isOpen && isFloating && eq.e_eq)  html += `• Câmbio (e): R$ ${eq.e_eq.toFixed(2)}/USD<br>`;
-      if (isOpen && !isFloating && eq.M_eq) html += `• Oferta de Moeda (M): ${Math.round(eq.M_eq)}<br>`;
+      html += `<br><br><div style="border-top: 1px solid rgba(0,0,0,0.1); padding-top: 10px;">
+        <strong>🎯 Ponto de Equilíbrio:</strong><br>
+        • Y = ${Math.round(eq.Y)} | i = ${eq.r?.toFixed(2)}%<br>`;
+      if (isOpen && isFloating && eq.e_eq)  html += `• Câmbio (e) = R$ ${eq.e_eq.toFixed(2)}/USD`;
+      if (isOpen && !isFloating && eq.M_eq) html += `• Moeda (M) = ${Math.round(eq.M_eq)}`;
+      html += `</div>`;
     }
 
     return html;
@@ -649,5 +626,112 @@ Sem comércio internacional nem fluxos de capital. O equilíbrio ocorre onde o m
     }
     
     return enriched;
+  }
+
+  /**
+   * Get open economy parameter explanation
+   */
+  getOpenEconomyParameterExplanation(param, value) {
+    const explanations = {
+      x1: `<strong>⚙️ Sensibilidade das Exportações à Renda Externa (x1) = ${value.toFixed(2)}</strong><br><br>
+          <strong>📖 Definição:</strong> Quanto as nossas exportações aumentam para cada unidade de aumento na renda do resto do mundo ($Y^*$).<br><br>
+          <strong>📊 Impacto no Modelo:</strong><br>
+          • <strong>Deslocamento da IS:</strong> x1 ↑ → Aumenta o efeito de $Y^*$ sobre a demanda agregada.<br>
+          • <strong>Saldo Comercial:</strong> x1 ↑ → Torna o país mais dependente do crescimento global.<br><br>
+          <strong>💡 Interpretação:</strong><br>
+          Se a renda mundial subir R$ 100 bi, nossas exportações crescerão R$ ${(value * 100).toFixed(0)} bi.`,
+
+      x2: `<strong>⚙️ Sensibilidade das Exportações ao Câmbio (x2) = ${value.toFixed(0)}</strong><br><br>
+          <strong>📖 Definição:</strong> Aumento nas exportações decorrente de uma desvalorização nominal da moeda (↑e).<br><br>
+          <strong>📊 Impacto no Modelo:</strong><br>
+          • <strong>Inclinação da BP e IS:</strong> x2 ↑ → Curvas ficam mais sensíveis a variações cambiais.<br>
+          • <strong>Competitividade:</strong> Mede o ganho de mercado externo quando nossa moeda fica mais barata.<br><br>
+          <strong>💡 Interpretação:</strong><br>
+          Para cada R$ 1,00 de desvalorização (e↑), vendemos R$ ${value.toFixed(0)} bi a mais para o exterior.`,
+
+      m1: `<strong>⚙️ Propensão Marginal a Importar (m1) = ${value.toFixed(2)}</strong><br><br>
+          <strong>📖 Definição:</strong> Fração de cada real adicional de renda nacional que é gasto em produtos importados.<br><br>
+          <strong>📊 Impacto no Modelo:</strong><br>
+          • <strong>Inclinação da IS:</strong> m1 ↑ → IS fica MAIS INCLINADA (mais vertical), pois parte do estímulo "vaza" para o exterior.<br>
+          • <strong>Multiplicador:</strong> Reduz o multiplicador de gastos públicos [$k = 1/(1-c+m1)$].<br>
+          • <strong>Balanço de Pagamentos:</strong> m1 ↑ → Torna a BP mais dependente do nível de atividade interna.<br><br>
+          <strong>💡 Interpretação:</strong><br>
+          De cada R$ 1,00 de renda gerada no país, R$ ${value.toFixed(2)} são usados para comprar produtos estrangeiros.`,
+
+      m2: `<strong>⚙️ Sensibilidade das Importações ao Câmbio (m2) = ${value.toFixed(0)}</strong><br><br>
+          <strong>📖 Definição:</strong> Redução nas importações quando o câmbio desvaloriza (o produto importado fica mais caro).<br><br>
+          <strong>📊 Impacto no Modelo:</strong> x2 + m2 compõem a sensibilidade líquida do comércio ao câmbio.<br><br>
+          <strong>💡 Interpretação:</strong><br>
+          Se o dólar subir R$ 1,00, deixamos de importar R$ ${value.toFixed(0)} bi por conta do aumento nos preços externos em moeda local.`,
+
+      f: `<strong>⚙️ Mobilidade de Capitais (f) = ${value.toFixed(0)}</strong><br><br>
+          <strong>📖 Definição:</strong> Sensibilidade dos fluxos financeiros internacionais ao diferencial de juros ($i - i^*$).<br><br>
+          <strong>📊 Impacto na Curva BP:</strong><br>
+          • <strong>f → ∞ (Perfeita):</strong> BP horizontal. Juros domésticos não podem divergir dos internacionais.<br>
+          • <strong>f intermediário:</strong> BP inclinada positivamente.<br>
+          • <strong>f → 0 (Nula):</strong> BP vertical. O equilíbrio depende apenas do comércio, não do juro.<br><br>
+          <strong>💡 Interpretação:</strong><br>
+          Mede a facilidade com que o capital entra ou sai do país buscando rentabilidade. Quanto maior f, mais "globalizada" financeiramente é a economia.`,
+
+      Ystar: `<strong>🌎 Renda Externa (Y*) = ${value.toFixed(0)}</strong><br><br>
+          <strong>📖 Significado:</strong> Nível de atividade econômica no resto do mundo (ex: PIB dos principais parceiros comerciais).<br><br>
+          <strong>📊 Efeito:</strong><br>
+          1️⃣ ↑ Y* → Estrangeiros compram mais nossos produtos (↑ Exportações)<br>
+          2️⃣ IS desloca para a DIREITA (aumenta Y interno)<br>
+          3️⃣ BP desloca para a DIREITA (melhora o saldo comercial)<br><br>
+          <strong>💡 Resultado:</strong> O crescimento global funciona como um motor externo para a nossa economia.`,
+
+      estar: `<strong>🌎 Taxa de Juros Internacional (i*) = ${value.toFixed(2)}%</strong><br><br>
+          <strong>📖 Significado:</strong> Custo do dinheiro no mercado global (ex: taxa do Fed ou BCE).<br><br>
+          <strong>📊 Efeito:</strong><br>
+          1️⃣ ↑ i* → Capitais tendem a SAIR do país buscando maior retorno lá fora<br>
+          2️⃣ Pressão para desvalorização da nossa moeda (↑ e)<br>
+          3️⃣ Se câmbio for fixo, BC é forçado a elevar juros internos para evitar fuga de reservas.<br><br>
+          <strong>💡 Resultado:</strong> Define o "piso" de juros para atrair capital em regimes de alta mobilidade.`,
+          
+      P: `<strong>📉 Nível de Preços (P) = ${value.toFixed(2)}</strong><br><br>
+          <strong>📖 Significado:</strong> Índice de preços doméstico. No modelo IS-LM-BP, preços afetam o câmbio real e a oferta real de moeda.<br><br>
+          <strong>📊 Efeito:</strong><br>
+          1️⃣ ↑ P → Oferta real de moeda (M/P) CAI → LM desloca para a esquerda (juros sobem).<br>
+          2️⃣ ↑ P → Nossos produtos ficam mais caros frente aos estrangeiros (Câmbio Real cai) → Exportações caem, Importações sobem.<br><br>
+          <strong>💡 Resultado:</strong> A inflação interna reduz a oferta monetária real e a competitividade comercial.`
+    };
+    
+    return explanations[param] || explanations[param.replace('rstar', 'estar')] || '';
+  }
+
+  /**
+   * Get detailed theory about the mobility regime
+   */
+  getRegimeTheory(capitalMobility, params) {
+    const istar = params?.rstar?.toFixed(2) || params?.istar?.toFixed(2) || 'i*';
+    const Ystar = params?.Ystar?.toFixed(0) || 'Y*';
+    const f = params?.f?.toFixed(0) || 'f';
+    const m1 = params?.m1?.toFixed(2) || 'm1';
+
+    const theories = {
+      perfect: `<strong>🌐 Regime: Mobilidade Perfeita</strong><br><br>
+          <strong>Engrenagem Principal:</strong> A Balança de Pagamentos é uma linha horizontal no nível de juros internacional ($i^*$).<br><br>
+          <strong>Parâmetros Determinantes:</strong><br>
+          • <strong>i* (${istar}%):</strong> É a "âncora" da economia. Se os juros domésticos tentarem subir, entra capital e o câmbio cai (valoriza).<br>
+          • <strong>Câmbio (e):</strong> Funciona como o principal amortecedor de choques externos.<br><br>
+          <em>Dica: Mudanças em G ou T não afetam a renda em câmbio flutuante, apenas apreciam a moeda.</em>`,
+
+      imperfect: `<strong>🌐 Regime: Mobilidade Imperfeita</strong><br><br>
+          <strong>Engrenagem Principal:</strong> A curva BP tem inclinação positiva, dada pela razão entre a fuga de capital e o comércio ($m_1/f$).<br><br>
+          <strong>Parâmetros Determinantes:</strong><br>
+          • <strong>f (${f}):</strong> Mede a "grossura" do canal financeiro. Se f for alto, a BP é quase horizontal.<br>
+          • <strong>m1 (${m1}):</strong> Representa o "vazamento" de renda para importações. Quanto maior m1, mais inclinada é a BP.<br><br>
+          <em>Dica: O equilíbrio exige que o excedente comercial compense o déficit financeiro (ou vice-versa).</em>`,
+
+      zero: `<strong>🌐 Regime: Mobilidade Nula</strong><br><br>
+          <strong>Engrenagem Principal:</strong> A BP é vertical. O país está financeiramente isolado, dependendo 100% de exportar para poder importar.<br><br>
+          <strong>Parâmetros Determinantes:</strong><br>
+          • <strong>Y* (${Ystar}) e x1:</strong> Definem o limite de crescimento. Se o mundo cresce, nossa BP "anda" para a direita, permitindo que a gente cresça junto.<br>
+          • <strong>m1 (${m1}):</strong> Define quão rápido batemos no teto da restrição externa ao crescer.<br><br>
+          <em>Dica: Juros altos não atraem dólares aqui. O único jeito de melhorar o saldo é via câmbio ou renda externa.</em>`
+    };
+
+    return theories[capitalMobility] || 'Selecione um regime de mobilidade no cabeçalho.';
   }
 }

@@ -154,31 +154,42 @@ const updateApp = debounce((source = null, direction = null) => {
     // Update structural parameters explanation
     const structuralParams = ['c', 'b', 'k', 'h'];
     if (source && structuralParams.includes(source)) {
-      console.log('Updating structural explanation for:', source, 'value:', state.params[source]);
       const structuralExplanation = explanationEngine.getStructuralParameterExplanation(
         source, 
         state.params[source], 
         state.isOpenEconomy
       );
       uiController.updateStructuralExplanation(structuralExplanation);
+    } else {
       // Default structural explanation
-      const m = state.params.m || 0.25;
-      const k_mult = state.isOpenEconomy ? (1 / (1 - state.params.c + m)) : (1 / (1 - state.params.c));
+      const k_mult = state.isOpenEconomy 
+        ? (1 / (1 - state.params.c + state.params.m1)) 
+        : (1 / (1 - state.params.c));
       
       let defaultStructural = `<strong>Parâmetros Atuais:</strong><br>
-        • PMgC (c) = ${state.params.c.toFixed(2)} → Multiplicador = ${k_mult.toFixed(2)}<br>`;
-      
-      if (state.isOpenEconomy) {
-        defaultStructural += `• PMgM (m) = ${m.toFixed(2)} (vazamento externo)<br>`;
-      }
-
-      defaultStructural += `
-        • Sen. Investimento (b) = ${state.params.b.toFixed(0)} → IS ${state.params.b > 60 ? 'mais horizontal' : 'mais vertical'}<br>
-        • Sen. Moeda-Renda (k) = ${state.params.k.toFixed(2)} → LM ${state.params.k > 0.5 ? 'mais vertical' : 'mais horizontal'}<br>
-        • Sen. Moeda-Juros (h) = ${state.params.h.toFixed(0)} → LM ${state.params.h > 80 ? 'mais horizontal' : 'mais vertical'}<br><br>
-        <em>Clique nos sliders dos parâmetros estruturais para ver explicações detalhadas.</em>`;
+        • PMgC (c) = ${state.params.c.toFixed(2)} → Multiplicador = ${k_mult.toFixed(2)}<br>
+        • Sen. Investimento (b) = ${state.params.b.toFixed(0)}<br>
+        • Sen. Moeda-Renda (k) = ${state.params.k.toFixed(2)}<br>
+        • Sen. Moeda-Juros (h) = ${state.params.h.toFixed(0)}<br><br>
+        <em>Ajuste sliders ou clique em "Aplicar" nas abas para ver detalhes.</em>`;
       
       uiController.updateStructuralExplanation(defaultStructural);
+    }
+
+    // Update open economy parameters explanation
+    const openEcoParams = ['x1', 'x2', 'm1', 'm2', 'f', 'Ystar', 'rstar', 'P'];
+    if (state.isOpenEconomy) {
+      if (source && (openEcoParams.includes(source) || source === 'rstar')) {
+        const openEcoExplanation = explanationEngine.getOpenEconomyParameterExplanation(
+          source, 
+          state.params[source === 'rstar' ? 'rstar' : source]
+        );
+        uiController.updateOpenEconomyExplanation(openEcoExplanation);
+      } else {
+        // Default theoretical explanation for the regime
+        const regimeTheory = explanationEngine.getRegimeTheory(state.capitalMobility, state.params);
+        uiController.updateOpenEconomyExplanation(regimeTheory);
+      }
     }
     
     // Auto-save state
@@ -490,28 +501,44 @@ function getStep(key) {
 }
 
 /**
- * Load advanced parameters into modal
+ * Helper to safely set value to a DOM element if it exists
+ */
+function setVal(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.value = val;
+}
+
+/**
+ * Helper to safely get value from a DOM element if it exists
+ */
+function getVal(id, defaultVal = 0) {
+  const el = document.getElementById(id);
+  return el ? parseFloat(el.value) : defaultVal;
+}
+
+/**
+ * Load advanced parameters into modal/panes
  */
 function loadAdvancedParams() {
   const state = stateManager.getState();
   const params = state.params;
   
   // Componentes autônomos
-  document.getElementById('param-C0').value = params.C0 || 1500;
-  document.getElementById('param-I0').value = params.I0 || 2000;
-  document.getElementById('param-X0').value = params.X0 || 1200; // Calibrado para BP vertical
-  document.getElementById('param-M0').value = params.M0 || 2500; // Calibrado para BP vertical
-  document.getElementById('param-L0').value = params.L0 || 0;
-  document.getElementById('param-K0').value = params.K0 || 0;
+  setVal('param-C0', params.C0);
+  setVal('param-I0', params.I0);
+  setVal('param-X0', params.X0);
+  setVal('param-M0', params.M0);
+  setVal('param-L0', params.L0);
+  setVal('param-K0', params.K0);
   
-  // Economia aberta
-  document.getElementById('param-x1').value = params.x1 || 0.15;
-  document.getElementById('param-x2').value = params.x2 || 300;
-  document.getElementById('param-m2').value = params.m2 || 200;
-  document.getElementById('param-f').value = params.f || 100;
-  document.getElementById('param-Ystar').value = params.Ystar || 12000;
-  document.getElementById('param-P').value = params.P || 1.0;
-  document.getElementById('param-m1').value = params.m1 || 0.15; // Aumentado m1 para BP vertical
+  // Economia aberta & estruturais extras
+  setVal('param-x1', params.x1);
+  setVal('param-x2', params.x2);
+  setVal('param-m1', params.m1);
+  setVal('param-m2', params.m2);
+  setVal('param-f',  params.f);
+  setVal('param-Ystar', params.Ystar);
+  setVal('param-P',     params.P);
   
   // Mobilidade de capital
   const mobilityRadios = document.querySelectorAll('input[name="capitalMobility"]');
@@ -521,62 +548,48 @@ function loadAdvancedParams() {
 }
 
 /**
- * Apply advanced parameters from modal
+ * Apply advanced parameters from panes
  */
 function applyAdvancedParams() {
+  const state = stateManager.getState();
+  
   const updates = {
-    C0: parseFloat(document.getElementById('param-C0').value),
-    I0: parseFloat(document.getElementById('param-I0').value),
-    X0: parseFloat(document.getElementById('param-X0').value),
-    M0: parseFloat(document.getElementById('param-M0').value),
-    L0: parseFloat(document.getElementById('param-L0').value),
-    K0: parseFloat(document.getElementById('param-K0').value),
-    x1: parseFloat(document.getElementById('param-x1').value),
-    x2: parseFloat(document.getElementById('param-x2').value),
-    m2: parseFloat(document.getElementById('param-m2').value),
-    f: parseFloat(document.getElementById('param-f').value),
-    Ystar: parseFloat(document.getElementById('param-Ystar').value),
-    P: parseFloat(document.getElementById('param-P').value)
+    C0:    getVal('param-C0', state.params.C0),
+    I0:    getVal('param-I0', state.params.I0),
+    X0:    getVal('param-X0', state.params.X0),
+    M0:    getVal('param-M0', state.params.M0),
+    L0:    getVal('param-L0', state.params.L0),
+    K0:    getVal('param-K0', state.params.K0),
+    x1:    getVal('param-x1', state.params.x1),
+    x2:    getVal('param-x2', state.params.x2),
+    m1:    getVal('param-m1', state.params.m1),
+    m2:    getVal('param-m2', state.params.m2),
+    f:     getVal('param-f',  state.params.f),
+    Ystar: getVal('param-Ystar', state.params.Ystar),
+    P:     getVal('param-P',     state.params.P)
   };
   
   stateManager.updateParams(updates);
   
-  // Atualizar mobilidade de capital
-  const selectedMobility = document.querySelector('input[name="capitalMobility"]:checked').value;
-  stateManager.setCapitalMobility(selectedMobility); // Usar método correto
-  
-  console.log('Capital Mobility set to:', selectedMobility);
-  
-  // Ajustar f baseado na mobilidade
-  if (selectedMobility === 'perfect') {
-    stateManager.updateParams({ f: 999999 });
-  } else if (selectedMobility === 'zero' || selectedMobility === 'closed') {
-    stateManager.updateParams({ f: 0 });
+  // Atualizar mobilidade de capital baseada no rádio ativo
+  const checkedMobility = document.querySelector('input[name="capitalMobility"]:checked');
+  if (checkedMobility) {
+    const selectedMobility = checkedMobility.value;
+    stateManager.setCapitalMobility(selectedMobility);
+    
+    // Ajustar f baseado na mobilidade se f não foi alterado manualmente para algo extremo
+    // (Se f foi alterado via input, o updates acima já cuidou disso, mas se o usuário 
+    // apenas mudou o rádio e clicou aplicar, garantimos os defaults do regime)
+    if (selectedMobility === 'perfect') {
+      stateManager.updateParams({ f: 999999 });
+    } else if (selectedMobility === 'zero' || selectedMobility === 'closed') {
+      stateManager.updateParams({ f: 0.1 }); // Usar 0.1 para evitar divisões por zero
+    }
   }
   
-  // Se não for economia fechada, ativar economia aberta
-  if (selectedMobility !== 'closed') {
-    stateManager.setEconomyType(true); // Ativar economia aberta
-    uiController.updateFromState(stateManager.getState());
-    console.log('Economy opened. isOpenEconomy:', stateManager.getState().isOpenEconomy);
-  } else {
-    stateManager.setEconomyType(false); // Desativar economia aberta
-    uiController.updateFromState(stateManager.getState());
-    console.log('Economy closed. isOpenEconomy:', stateManager.getState().isOpenEconomy);
-  }
-  
-  // Log dos parâmetros relevantes para BP
-  const state = stateManager.getState();
-  console.log('Params for BP:', {
-    X0: state.params.X0,
-    v: state.params.v,
-    x2: state.params.x2,
-    e: state.params.e,
-    E: state.params.E,
-    m: state.params.m,
-    m1: state.params.m1,
-    capitalMobility: state.capitalMobility
-  });
+  // Sync UI and trigger update
+  uiController.updateFromState(stateManager.getState());
+  updateApp();
 }
 
 /**

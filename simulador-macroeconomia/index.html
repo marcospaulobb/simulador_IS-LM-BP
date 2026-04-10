@@ -123,7 +123,7 @@
       </div>
 
       <!-- Explanation areas - Side by Side -->
-      <div class="mx-4 mb-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="mx-4 mb-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
         <!-- Policy Variables Box -->
         <div class="p-4 bg-white border-l-4 border-mackenzie-green rounded-lg shadow-md max-h-[300px] overflow-y-auto">
           <div class="flex items-start gap-2">
@@ -154,6 +154,23 @@
               <p id="structural-text" class="text-xs text-gray-700 leading-relaxed">
                 Os parâmetros estruturais (c, b, k, h) determinam a inclinação das curvas IS e LM, afetando a eficácia
                 das políticas econômicas.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Open Economy Parameters Box -->
+        <div id="open-economy-box"
+          class="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border-l-4 border-blue-600 rounded-lg shadow-md max-h-[300px] overflow-y-auto hidden">
+          <div class="flex items-start gap-2">
+            <div
+              class="flex-shrink-0 w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
+              🌐
+            </div>
+            <div class="flex-1">
+              <h3 class="font-bold text-blue-700 mb-1 text-sm">Economia Aberta</h3>
+              <p id="open-economy-text" class="text-xs text-blue-900 leading-relaxed">
+                Parâmetros como mobilidade de capitais (f) e sensibilidade comercial (x, m) definem a inclinação da BP e o impacto do setor externo.
               </p>
             </div>
           </div>
@@ -292,6 +309,16 @@
             <div class="absolute left-0 top-0 w-1 h-full bg-blue-500"></div>
             <h3 class="text-[10px] font-bold text-blue-800 uppercase tracking-wide mb-2 pl-2">Componentes Autônomos</h3>
             <div class="grid grid-cols-2 gap-2 pl-2">
+              <div>
+                <label class="text-[10px] font-semibold text-gray-600">C0 (Consumo Autônomo)</label>
+                <input type="number" id="param-C0" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
+                  value="1500" step="100">
+              </div>
+              <div>
+                <label class="text-[10px] font-semibold text-gray-600">I0 (Investimento Aut.)</label>
+                <input type="number" id="param-I0" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
+                  value="2000" step="100">
+              </div>
               <div class="open-eco-group hidden">
                 <label class="text-[10px] font-semibold text-gray-600">K0 (Fluxo Capital)</label>
                 <input type="number" id="param-K0" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
@@ -359,7 +386,7 @@
               <div>
                 <label class="text-[10px] font-semibold text-gray-600">x1 (Exp à Renda)</label>
                 <input type="number" id="param-x1" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
-                  value="0.10" step="0.01">
+                  value="0.15" step="0.01">
               </div>
               <div>
                 <label class="text-[10px] font-semibold text-gray-600">x2 (Exp ao Câmbio)</label>
@@ -367,14 +394,34 @@
                   value="100" step="10">
               </div>
               <div>
+                <label class="text-[10px] font-semibold text-gray-600">m1 (PMg Imp.)</label>
+                <input type="number" id="param-m1" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
+                  value="0.25" step="0.01">
+              </div>
+              <div>
                 <label class="text-[10px] font-semibold text-gray-600">m2 (Imp ao Câmbio)</label>
                 <input type="number" id="param-m2" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
                   value="200" step="10">
               </div>
               <div>
+                <label class="text-[10px] font-semibold text-gray-600">X0 (Exp. Autônomas)</label>
+                <input type="number" id="param-X0" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
+                  value="1500" step="100">
+              </div>
+              <div>
+                <label class="text-[10px] font-semibold text-gray-600">M0 (Imp. Autônomas)</label>
+                <input type="number" id="param-M0" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
+                  value="1300" step="100">
+              </div>
+              <div>
                 <label class="text-[10px] font-semibold text-gray-600">f (Mobilidade Cap.)</label>
                 <input type="number" id="param-f" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
-                  value="100" step="10" disabled>
+                  value="100" step="10">
+              </div>
+              <div>
+                <label class="text-[10px] font-semibold text-gray-600">L0 (Dem. Moeda Aut.)</label>
+                <input type="number" id="param-L0" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
+                  value="0" step="100">
               </div>
               <div>
                 <label class="text-[10px] font-semibold text-gray-600">Y* (Renda Externa)</label>

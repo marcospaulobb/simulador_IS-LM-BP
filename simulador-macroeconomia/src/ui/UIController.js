@@ -28,6 +28,8 @@ export class UIController {
     // Text areas
     this.explanationText = document.getElementById('explanation-text');
     this.structuralText  = document.getElementById('structural-text');
+    this.openEcoBox      = document.getElementById('open-economy-box');
+    this.openEcoText     = document.getElementById('open-economy-text');
   }
 
   /**
@@ -119,6 +121,7 @@ export class UIController {
   updateEconomyUI(isOpen) {
     this.openEcoGroups.forEach(g => g.classList.toggle('hidden', !isOpen));
     this.openEcoBtns.forEach(b => b.classList.toggle('hidden', !isOpen));
+    if (this.openEcoBox) this.openEcoBox.classList.toggle('hidden', !isOpen);
   }
 
   /**
@@ -160,6 +163,12 @@ export class UIController {
     if (!this.structuralText) return;
     gsap.fromTo(this.structuralText, { opacity: 0 }, { opacity: 1, duration: 0.4 });
     this.structuralText.innerHTML = text;
+  }
+
+  updateOpenEconomyExplanation(text) {
+    if (!this.openEcoText) return;
+    gsap.fromTo(this.openEcoText, { opacity: 0 }, { opacity: 1, duration: 0.4 });
+    this.openEcoText.innerHTML = text;
   }
 
   animateSlider(sliderId) {
