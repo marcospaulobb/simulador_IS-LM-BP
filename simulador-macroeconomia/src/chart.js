@@ -443,7 +443,7 @@ export function initChart(canvasId) {
             color: '#1f2937'
           },
           min: 0,
-          max: 40,
+          max: 30,
           ticks: {
             font: {
               family: 'Inter, sans-serif',
@@ -551,8 +551,8 @@ function arraysEqual(arr1, arr2) {
 function adjustAxes(chart, dataIS, dataLM, dataBP, eqData) {
   // Fixed reference frame — never rescales
   chart.options.scales.x.min = 0;
-  chart.options.scales.x.max = 14000;
+  chart.options.scales.x.max = 10000;
   chart.options.scales.y.min = 0;
-  chart.options.scales.y.max = 40;
+  chart.options.scales.y.max = 30;
 }
 

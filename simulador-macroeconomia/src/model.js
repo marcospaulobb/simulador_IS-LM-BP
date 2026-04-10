@@ -105,9 +105,9 @@ export function getISData(params, isOpen, dynamic_e) {
   const add     = isOpen ? (X_total + real_v * dynamic_e) : 0;
 
   const data = [];
-  for (let Y = 0; Y <= 14000; Y += 200) {
+  for (let Y = 0; Y <= 10000; Y += 200) {
     const r = (A + add - mult * Y) / b;
-    if (isFinite(r) && r >= 0 && r <= 40) {
+    if (isFinite(r) && r >= 0 && r <= 30) {
       data.push({ x: Y, y: r });
     }
   }
@@ -141,8 +141,8 @@ export function getBPData(rstar, capitalMobility = 'perfect', params = null, dyn
   const real_rstar = rstar || params.istar || 5.0;
 
   // Chart bounds (must match the static axes in chart.js)
-  const Y_MIN = 0, Y_MAX = 14000;
-  const R_MIN = 0, R_MAX = 40;
+  const Y_MIN = 0, Y_MAX = 10000;
+  const R_MIN = 0, R_MAX = 30;
 
   const data = [];
 

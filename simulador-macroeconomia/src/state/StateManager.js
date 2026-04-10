@@ -29,24 +29,24 @@ export class StateManager {
         
         // === PARÂMETROS DE ECONOMIA ABERTA ===
         x1: 0.15,     // Sensibilidade das exportações à renda externa
-        x2: 100,      // Sensibilidade das exportações ao câmbio (ajustado)
+        x2: 100,      // Sensibilidade das exportações ao câmbio
         m2: 200,      // Sensibilidade das importações ao câmbio
         f: 100,       // Sensibilidade dos fluxos de capital ao diferencial de juros
         
         // === VARIÁVEIS EXÓGENAS ===
-        Ystar: 12000, // Renda externa (PIB mundial ~R$ 1,2 quatrilhão / 100 bi)
-        istar: 14.75, // Taxa de juros externa (Selic Brasil)
-        E: 5.17,      // Taxa de câmbio (R$/USD) - Dez 2024
-        M: 1200,      // Oferta nominal de moeda (calibrado para i=14.75%)
+        Ystar: 2000,  // Renda externa
+        istar: 15.0,  // Taxa de juros externa
+        E: 3.2,       // Taxa de câmbio (R$/USD)
+        M: 1750,      // Oferta nominal de moeda
         P: 1.0,       // Nível de preços (normalizado)
         
         // === VARIÁVEIS LEGADAS (compatibilidade) - sincronizadas ===
-        G: 3200,      // Alias para G0 (ajustado)
-        T: 3500,      // Alias para T0
-        e: 5.17,      // Alias para E (taxa de câmbio)
-        rstar: 14.75, // Alias para istar (Selic Brasil)
-        m: 0.25,      // Alias para m1 (ajustado)
-        v: 100        // Alias para x2 (ajustado)
+        G: 1500,      // Alias para G0
+        T: 3000,      // Alias para T0
+        e: 3.2,       // Alias para E (taxa de câmbio)
+        rstar: 15.0,  // Alias para istar
+        m: 0.3,       // Alias para m1
+        v: 100        // Alias para x2
       },
       equilibrium: null,
       history: [],
@@ -144,17 +144,19 @@ export class StateManager {
           break;
         case 'e':
         case 'E':
-          validated[key] = Math.max(4.0, Math.min(6.0, numValue));
+          validated[key] = Math.max(0.1, Math.min(20.0, numValue));
           break;
         case 'rstar':
-          validated[key] = Math.max(0, Math.min(20, numValue));
+        case 'istar':
+          validated[key] = Math.max(0, Math.min(40, numValue));
           break;
         case 'b':
         case 'h':
           validated[key] = Math.max(1, Math.min(200, numValue));
           break;
         case 'v':
-          validated[key] = Math.max(10, Math.min(500, numValue));
+        case 'x2':
+          validated[key] = Math.max(1, Math.min(1000, numValue));
           break;
         default:
           validated[key] = Math.max(0, numValue);

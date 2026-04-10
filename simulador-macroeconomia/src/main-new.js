@@ -19,7 +19,7 @@ const explanationEngine = new ExplanationEngine();
 const modalManager = new ModalManager();
 
 // Flag para usar modelo expandido
-let useExpandedModel = false; // Começar com modelo simples
+let useExpandedModel = true; // Sempre usar modelo expandido para maior precisão em todos os regimes
 
 /**
  * Main update function - recalculates equilibrium and updates UI
@@ -77,12 +77,21 @@ const updateApp = debounce((source = null, direction = null) => {
     
     // Update endogenous variables in UI
     if (state.isOpenEconomy && state.isFloatingRate) {
-      uiController.updateDisplay('e', eq.e_eq || eq.E);
-      stateManager.updateParams({ e: eq.e_eq || eq.E, E: eq.e_eq || eq.E });
+      const e_val = eq.e_eq || eq.E;
+      if (isFinite(e_val)) {
+        // Limit only for extreme safety, but allow 3.2 baseline and shocks
+        const safe_e = Math.max(0.1, Math.min(20.0, e_val));
+        uiController.updateDisplay('e', safe_e);
+        stateManager.updateParams({ e: safe_e, E: safe_e });
+      }
     }
     if (state.isOpenEconomy && !state.isFloatingRate) {
-      uiController.updateDisplay('M', eq.M_eq || eq.M);
-      stateManager.updateParams({ M: eq.M_eq || eq.M });
+      const M_val = eq.M_eq || eq.M;
+      if (isFinite(M_val) && M_val > 0) {
+        // Permite que M se ajuste livremente para manter o câmbio fixo
+        uiController.updateDisplay('M', M_val);
+        stateManager.updateParams({ M: M_val });
+      }
     }
     
     // Get initial state for comparison
@@ -152,14 +161,23 @@ const updateApp = debounce((source = null, direction = null) => {
         state.isOpenEconomy
       );
       uiController.updateStructuralExplanation(structuralExplanation);
-    } else {
       // Default structural explanation
-      const defaultStructural = `<strong>Parâmetros Atuais:</strong><br>
-        • PMgC (c) = ${state.params.c.toFixed(2)} → Multiplicador = ${(1/(1-state.params.c)).toFixed(2)}<br>
+      const m = state.params.m || 0.25;
+      const k_mult = state.isOpenEconomy ? (1 / (1 - state.params.c + m)) : (1 / (1 - state.params.c));
+      
+      let defaultStructural = `<strong>Parâmetros Atuais:</strong><br>
+        • PMgC (c) = ${state.params.c.toFixed(2)} → Multiplicador = ${k_mult.toFixed(2)}<br>`;
+      
+      if (state.isOpenEconomy) {
+        defaultStructural += `• PMgM (m) = ${m.toFixed(2)} (vazamento externo)<br>`;
+      }
+
+      defaultStructural += `
         • Sen. Investimento (b) = ${state.params.b.toFixed(0)} → IS ${state.params.b > 60 ? 'mais horizontal' : 'mais vertical'}<br>
         • Sen. Moeda-Renda (k) = ${state.params.k.toFixed(2)} → LM ${state.params.k > 0.5 ? 'mais vertical' : 'mais horizontal'}<br>
         • Sen. Moeda-Juros (h) = ${state.params.h.toFixed(0)} → LM ${state.params.h > 80 ? 'mais horizontal' : 'mais vertical'}<br><br>
         <em>Clique nos sliders dos parâmetros estruturais para ver explicações detalhadas.</em>`;
+      
       uiController.updateStructuralExplanation(defaultStructural);
     }
     
@@ -246,12 +264,41 @@ function setupEventListeners() {
     });
   }
 
-  function applyModelType(value) {
-    const isOpen = value === 'islmbp';
-    const showBP = value === 'islmbp';
-    const isFloating = stateManager.getState().isFloatingRate; // respect current exchange selection
+  /**
+   * Reset params to defaults, then apply the given regime flags.
+   * Called on every regime switch so curves are always in equilibrium.
+   */
+  function resetAndApplyRegime({ isOpen, isFloating, capitalMobility }) {
+    // 1. Reset all sliders/params to defaults
+    stateManager.reset();
+    stateManager.resetInitialState();
 
-    stateManager.setEconomyType(isOpen);
+    // 2. Apply the chosen regime flags
+    if (isOpen !== undefined)          stateManager.setEconomyType(isOpen);
+    if (isFloating !== undefined)      stateManager.setExchangeRegime(isFloating);
+    if (capitalMobility !== undefined) stateManager.setCapitalMobility(capitalMobility);
+
+    // 3. Sync showBP
+    stateManager.state.showBP = stateManager.getState().isOpenEconomy;
+
+    // 4. Sync all slider UI to the reset values
+    uiController.updateFromState(stateManager.getState());
+  }
+
+  function applyModelType(value) {
+    const isOpen    = value === 'islmbp';
+    const showBP    = value === 'islmbp';
+
+    // Read the currently checked mobility/exchange radios
+    const mobVal = document.querySelector('input[name="capitalMobility"]:checked')?.value || 'perfect';
+    const excVal = document.querySelector('input[name="exchangeRegime"]:checked')?.value  || 'floating';
+
+    resetAndApplyRegime({
+      isOpen,
+      isFloating:      excVal === 'floating',
+      capitalMobility: isOpen ? mobVal : 'perfect'
+    });
+
     stateManager.state.showBP = showBP;
 
     // Dim/activate sub-groups
@@ -259,8 +306,7 @@ function setupEventListeners() {
     setGroupActive('exchange-group', showBP);
 
     highlightRadios('modelType', 'active-blue');
-    uiController.updateFromState(stateManager.getState());
-    updateApp('toggles');
+    updateApp();
   }
 
   // Model radios
@@ -271,19 +317,28 @@ function setupEventListeners() {
   // Exchange rate radios
   document.querySelectorAll('input[name="exchangeRegime"]').forEach(radio => {
     radio.addEventListener('change', e => {
-      stateManager.setExchangeRegime(e.target.value === 'floating');
+      const mobVal = document.querySelector('input[name="capitalMobility"]:checked')?.value || 'perfect';
+      resetAndApplyRegime({
+        isOpen:          stateManager.getState().isOpenEconomy,
+        isFloating:      e.target.value === 'floating',
+        capitalMobility: mobVal
+      });
       highlightRadios('exchangeRegime', 'active-purple');
-      uiController.updateFromState(stateManager.getState());
-      updateApp('toggles');
+      updateApp();
     });
   });
 
   // Mobility radios
   document.querySelectorAll('input[name="capitalMobility"]').forEach(radio => {
     radio.addEventListener('change', e => {
-      stateManager.setCapitalMobility(e.target.value);
+      const excVal = document.querySelector('input[name="exchangeRegime"]:checked')?.value || 'floating';
+      resetAndApplyRegime({
+        isOpen:          true,
+        isFloating:      excVal === 'floating',
+        capitalMobility: e.target.value
+      });
       highlightRadios('capitalMobility', 'active-green');
-      updateApp('mobility');
+      updateApp();
     });
   });
 
@@ -444,18 +499,19 @@ function loadAdvancedParams() {
   // Componentes autônomos
   document.getElementById('param-C0').value = params.C0 || 1500;
   document.getElementById('param-I0').value = params.I0 || 2000;
-  document.getElementById('param-X0').value = params.X0 || 1500;
-  document.getElementById('param-M0').value = params.M0 || 1300;
+  document.getElementById('param-X0').value = params.X0 || 1200; // Calibrado para BP vertical
+  document.getElementById('param-M0').value = params.M0 || 2500; // Calibrado para BP vertical
   document.getElementById('param-L0').value = params.L0 || 0;
   document.getElementById('param-K0').value = params.K0 || 0;
   
-  // Economia aberta - ajustar valores padrão para equilíbrio com BP vertical
+  // Economia aberta
   document.getElementById('param-x1').value = params.x1 || 0.15;
   document.getElementById('param-x2').value = params.x2 || 300;
   document.getElementById('param-m2').value = params.m2 || 200;
   document.getElementById('param-f').value = params.f || 100;
   document.getElementById('param-Ystar').value = params.Ystar || 12000;
   document.getElementById('param-P').value = params.P || 1.0;
+  document.getElementById('param-m1').value = params.m1 || 0.15; // Aumentado m1 para BP vertical
   
   // Mobilidade de capital
   const mobilityRadios = document.querySelectorAll('input[name="capitalMobility"]');
@@ -539,13 +595,8 @@ function resetAdvancedParams() {
  * Render math equations
  */
 function renderMath() {
-  if (window.renderMathInElement) {
-    window.renderMathInElement(document.getElementById('math-content'), {
-      delimiters: [
-        {left: "$", right: "$", display: true},
-        {left: "$", right: "$", display: false}
-      ]
-    });
+  if (window.MathJax && window.MathJax.typesetPromise) {
+    window.MathJax.typesetPromise([document.getElementById('math-content')]).catch((err) => console.log('MathJax error:', err));
   }
 }
 
@@ -631,22 +682,39 @@ function init() {
   });
   
   // Load saved state or use defaults
+  // Note: for session stability we skip restoring localStorage if it conflicts
+  // with the selected radio defaults. Always start fresh from StateManager defaults.
+  // (Re-enable selective restore after confirming state sync is stable)
   const savedState = loadState();
   if (savedState) {
-    // Verificar se é um estado antigo (m < 0.2)
-    if (savedState.params && savedState.params.m && savedState.params.m < 0.2) {
-      console.log('Detected old state with m =', savedState.params.m, '- clearing localStorage');
+    // Verificar se é um estado antigo (baseado no rstar antigo de 14.75 ou e antigo de 5.17)
+    // Forçamos o reset para a nova calibração centralizada (Y=5000, i=15)
+    const isOldState = (savedState.params && (savedState.params.rstar === 14.75 || savedState.params.e === 5.17));
+    if (isOldState) {
+      console.log('Detected old calibration — clearing localStorage for centering update');
       localStorage.removeItem('macroSimulatorState');
-      uiController.showNotification('Estado antigo detectado - usando valores padrão atualizados', 'info');
     } else {
-      stateManager.importState(savedState);
-      uiController.updateFromState(stateManager.getState());
+      // (Do NOT restore state from localStorage on startup to avoid radio/state mismatch)
     }
   }
   
   // Initial update — default to IS-LM-BP mode (showBP = true)
   stateManager.state.showBP = true;
-  updateApp();
+
+  // Sync state with DOM-selected radios (overrides any stale localStorage values)
+  const selectedMobilityRadio = document.querySelector('input[name="capitalMobility"]:checked');
+  const selectedExchangeRadio = document.querySelector('input[name="exchangeRegime"]:checked');
+  const selectedModelRadio    = document.querySelector('input[name="modelType"]:checked');
+
+  if (selectedMobilityRadio) stateManager.setCapitalMobility(selectedMobilityRadio.value);
+  if (selectedExchangeRadio) stateManager.setExchangeRegime(selectedExchangeRadio.value === 'floating');
+  if (selectedModelRadio) {
+    const isOpen = selectedModelRadio.value === 'islmbp';
+    stateManager.setEconomyType(isOpen);
+    stateManager.state.showBP = isOpen;
+  }
+
+  updateApp(); // null source → getDefaultExplanation
   
   // Render math after short delay
   setTimeout(renderMath, 100);

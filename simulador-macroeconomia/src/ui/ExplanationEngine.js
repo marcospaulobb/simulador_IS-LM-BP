@@ -18,13 +18,14 @@ export class ExplanationEngine {
       return this.enrichExplanation(scenario.explanation, equilibrium, params, isOpenEconomy, isFloatingRate);
     }
     
-    // Default explanation
-    if (!cause) {
+    // Regime/mode switches → always show regime-level default explanation
+    const regimeSwitches = ['mobility', 'toggles', 'scenario', null];
+    if (!cause || regimeSwitches.includes(cause)) {
       return this.getDefaultExplanation(isOpenEconomy, isFloatingRate, equilibrium, params, capitalMobility);
     }
     
     // Shock-based explanation
-    return this.getShockExplanation(cause, direction, isOpenEconomy, isFloatingRate, equilibrium, params);
+    return this.getShockExplanation(cause, direction, isOpenEconomy, isFloatingRate, equilibrium, params, capitalMobility);
   }
 
   /**
@@ -119,9 +120,17 @@ Sem comércio internacional nem fluxos de capital. O equilíbrio ocorre onde o m
   /**
    * Shock-based explanation with detailed analysis
    */
-  getShockExplanation(cause, direction, isOpen, isFloating, eq, params) {
-    const key = `${cause}_${direction}_${isOpen ? 'open' : 'closed'}_${isFloating ? 'float' : 'fixed'}`;
+  getShockExplanation(cause, direction, isOpen, isFloating, eq, params, capitalMobility = 'perfect') {
+    let key = `${cause}_${direction}_${isOpen ? 'open' : 'closed'}_${isFloating ? 'float' : 'fixed'}_${capitalMobility}`;
     
+    // Fallback: if mobility-specific key doesn't exist, try the one without mobility suffix
+    // (This prevents breaking existing keys while allowing specialized ones)
+    
+    const structuralParams = ['c', 'b', 'k', 'h'];
+    if (structuralParams.includes(cause)) {
+      key = `${cause}_${direction}_closed_float_perfect`;
+    }
+
     const explanations = {
       // Fiscal policy - Closed economy
       'G_up_closed_float': `<strong>🔴 Política Fiscal Expansionista (↑ Gasto Público)</strong><br><br>
@@ -143,17 +152,66 @@ Sem comércio internacional nem fluxos de capital. O equilíbrio ocorre onde o m
         <strong>Resultado:</strong> ↓ Y, ↓ i, ↑ I (parcial)<br>
         A queda da renda é parcialmente compensada pelo aumento do investimento privado.`,
       
-      // Fiscal policy - Open floating
-      'G_up_open_float': `<strong>🔴 Política Fiscal Expansionista + Câmbio Flutuante</strong><br><br>
+      // === PARÂMETROS ESTRUTURAIS (Inclinação das Curvas) ===
+      
+      'c_up_closed_float': `<strong>📊 Aumento da Propensão a Consumir (c)</strong><br><br>
+        <strong>Efeito na Curva IS:</strong><br>
+        • Um 'c' maior aumenta o <em>Multiplicador Keynesiano</em>.<br>
+        • A curva IS torna-se <strong>mais horizontal</strong> (mais sensível).<br>
+        • A Demanda Agregada responde com mais força a variações de renda.<br><br>
+        <strong>Resultado:</strong> Maior impacto de políticas fiscais sobre o PIB (Y).`,
+
+      'b_up_closed_float': `<strong>📊 Aumento da Sensibilidade do Investimento (b)</strong><br><br>
+        <strong>Efeito na Curva IS:</strong><br>
+        • Investimentos respondem mais intensamente a mudanças na taxa de juros.<br>
+        • A curva IS torna-se <strong>mais horizontal</strong>.<br>
+        • Pequenas quedas no juro (i) geram grandes aumentos no Investimento e na Renda.<br><br>
+        <strong>Resultado:</strong> Aumenta a eficácia da política monetária e o efeito crowding-out da política fiscal.`,
+
+      'k_up_closed_float': `<strong>📊 Aumento da Sensibilidade da Demanda por Moeda à Renda (k)</strong><br><br>
+        <strong>Efeito na Curva LM:</strong><br>
+        • Aumentos na renda (Y) geram uma pressão maior por liquidez.<br>
+        • A curva LM torna-se <strong>mais vertical</strong> (mais inclinada).<br>
+        • É necessário um aumento maior no juro (i) para equilibrar o mercado monetário após um aumento de renda.<br><br>
+        <strong>Resultado:</strong> Reduz a eficácia da política fiscal (maior crowding-out).`,
+
+      'h_up_closed_float': `<strong>📊 Aumento da Sensibilidade da Demanda por Moeda ao Juro (h)</strong><br><br>
+        <strong>Efeito na Curva LM:</strong><br>
+        • A preferência pela liquidez é mais sensível à taxa de juros.<br>
+        • A curva LM torna-se <strong>mais horizontal</strong> (mais plana).<br>
+        • Caso extremo (h → ∞): <em>Armadilha da Liquidez</em>.<br><br>
+        <strong>Resultado:</strong> Aumenta a eficácia da política fiscal e reduz a eficácia da política monetária.`,
+      
+      'G_up_open_float_perfect': `<strong>🔴 Política Fiscal Expansionista + Câmbio Flutuante (Mob. Perfeita)</strong><br><br>
         <strong>Mecanismo (Mundell-Fleming):</strong><br>
         1️⃣ G aumenta → IS desloca DIREITA<br>
-        2️⃣ Pressão para i subir acima de i* = ${params?.rstar?.toFixed(2)}%<br>
+        2️⃣ Pressão para i subir acima de i*<br>
         3️⃣ Capitais ENTRAM no país (arbitragem)<br>
         4️⃣ Moeda nacional VALORIZA (e cai)<br>
         5️⃣ Exportações caem, Importações sobem → NX cai<br>
         6️⃣ IS desloca de VOLTA para esquerda<br><br>
         <strong>⚠️ Resultado: POLÍTICA FISCAL INEFICAZ!</strong><br>
-        Y retorna ao nível inicial. Apenas a composição muda: ↑ G, ↓ NX, e↓ (valorização)`,
+        Y retorna ao nível inicial. Ajuste via valorização cambial.`,
+
+      'G_up_open_float_zero': `<strong>🔴 Política Fiscal Expansionista + Câmbio Flutuante (Sem Mob. Capitais)</strong><br><br>
+        <strong>Mecanismo (Ajuste via Transações Correntes):</strong><br>
+        1️⃣ G aumenta → Renda (Y) aumenta → IS desloca DIREITA<br>
+        2️⃣ Y maior aumenta Importações (M) → Piora o Balanço de Pagamentos (déficit em NX)<br>
+        3️⃣ Moeda nacional DESVALORIZA (e sobe) para restaurar o equilíbrio externo<br>
+        4️⃣ Câmbio maior (e↑) encarece importados e estimula exportações<br>
+        5️⃣ NX aumenta, mas o aumento de Y inicial é neutralizado pela piora inicial do BP.<br><br>
+        <strong>⚠️ Resultado: POLÍTICA FISCAL INEFICAZ!</strong><br>
+        Y muda pouco. O ajuste ocorre via desvalorização cambial para equilibrar as contas externas.`,
+
+      'M_up_open_float_zero': `<strong>🟢 Política Monetária Expansionista + Câmbio Flutuante (Sem Mob. Capitais)</strong><br><br>
+        <strong>Mecanismo:</strong><br>
+        1️⃣ BC aumenta M → LM desloca DIREITA → i cai<br>
+        2️⃣ Juros menores estimulam investimento, mas o efeito principal é via câmbio<br>
+        3️⃣ A pressão por maior consumo gera déficit comercial → Moeda nacional DESVALORIZA (e sobe)<br>
+        4️⃣ Exportações Líquidas (NX) sobem fortemente devido ao câmbio alto<br>
+        5️⃣ IS desloca para a DIREITA significativamente.<br><br>
+        <strong>✅ Resultado: POLÍTICA MONETÁRIA MUITO EFICAZ!</strong><br>
+        Grande aumento em Y e e (desvalorização).`,
       
       'G_down_open_float': `<strong>🔵 Política Fiscal Contracionista + Câmbio Flutuante</strong><br><br>
         <strong>Mecanismo:</strong><br>
@@ -390,7 +448,18 @@ Sem comércio internacional nem fluxos de capital. O equilíbrio ocorre onde o m
         Caso extremo (h→0): LM vertical = Teoria Quantitativa da Moeda`,
     };
     
-    let explanation = explanations[key] || this.getGenericShockExplanation(cause, direction);
+    let explanation = explanations[key];
+    
+    // Fallback logic
+    if (!explanation) {
+      const key_no_mob = `${cause}_${direction}_${isOpen ? 'open' : 'closed'}_${isFloating ? 'float' : 'fixed'}`;
+      explanation = explanations[key_no_mob];
+    }
+    
+    // Generic fallback
+    if (!explanation) {
+      explanation = this.getGenericShockExplanation(cause, direction);
+    }
     
     // Add equilibrium values
     if (eq) {

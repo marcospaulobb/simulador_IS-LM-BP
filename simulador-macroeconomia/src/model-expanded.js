@@ -80,8 +80,8 @@ function computeClosedEconomy(A, c, b, k, h, M, P) {
     throw new Error('Denominador muito próximo de zero');
   }
   
-  const Y = (h * A + b * MReal) / denominator;
-  const i = (k * Y - MReal) / h;
+  const Y = (h * A + b * (MReal + L0)) / denominator;
+  const i = (k * Y - MReal - L0) / h;
   
   if (!isFinite(Y) || !isFinite(i) || Y < 0 || i < 0) {
     throw new Error('Equilíbrio inválido');
@@ -102,10 +102,10 @@ function computePerfectMobility(params, A, isFloating) {
   if (isFloating) {
     // Câmbio Flutuante: LM determina Y, IS ajusta E
     const MReal = M / P;
-    const Y = (MReal + h * i) / k;
+    const Y = (MReal + h * i + L0) / k;
     
     // Calcular E que equilibra a IS
-    const netExportSensitivity = x2 - m2;
+    const netExportSensitivity = x2 + m2;
     if (Math.abs(netExportSensitivity) < 0.001) {
       throw new Error('Sensibilidade líquida ao câmbio muito baixa');
     }
@@ -126,10 +126,10 @@ function computePerfectMobility(params, A, isFloating) {
       throw new Error('Denominador muito próximo de zero');
     }
     
-    const Y = (A + X0 + x1 * Ystar + (x2 - m2) * E - M0 - b * i) / denominator;
+    const Y = (A + X0 + x1 * Ystar + (x2 + m2) * E - M0 - b * i) / denominator;
     
-    // Calcular M que equilibra a LM
-    const M_eq = P * (k * Y - h * i);
+    // Calcular M que equilibra a LM (kY - hi = M/P + L0)
+    const M_eq = P * (k * Y - h * i - L0);
     
     return {
       Y,
@@ -146,89 +146,51 @@ function computePerfectMobility(params, A, isFloating) {
  */
 function computeImperfectMobility(params, A, isFloating) {
   const { c, b, k, h, m1, x1, x2, m2, f, X0, M0, K0, Ystar, istar, E, M, P } = params;
-  
+  const MReal = M / P;
+  const netExportSensitivity = x2 + m2;
+
   if (isFloating) {
-    // Câmbio Flutuante: Sistema de 3 equações (IS, LM, BP)
-    // Resolver numericamente para Y, i, E
+    // ANALYTICAL SOLUTION for Floating + Imperfect/Zero Mobility
+    // derivation: Y(1-c) + (b+f)i = A - K0 + f*istar
+    const denominator_Y = h * (1 - c) + k * (b + f);
+    if (Math.abs(denominator_Y) < 0.001) throw new Error('Denominator too small in analytical solution');
+
+    const Y_eq = (h * (A - K0 + f * istar) + (b + f) * (MReal + L0)) / denominator_Y;
+    const i_eq = (k * Y_eq - MReal - L0) / h;
     
-    // Aproximação iterativa
-    let Y = 3000; // Chute inicial
-    let i_val = istar;
-    let E_val = E;
-    
-    for (let iter = 0; iter < 100; iter++) {
-      const MReal = M / P;
-      
-      // LM: i = (k*Y - M/P) / h
-      i_val = (k * Y - MReal) / h;
-      
-      // BP: Calcular E que equilibra BP
-      // NX + CK = 0
-      // (X0 + x1*Ystar + x2*E - M0 - m1*Y - m2*E) + (K0 + f*(i - istar)) = 0
-      const netExportSensitivity = x2 - m2;
-      if (Math.abs(netExportSensitivity) < 0.001) {
-        E_val = E; // Manter E se sensibilidade muito baixa
-      } else {
-        E_val = (M0 + m1 * Y - X0 - x1 * Ystar - K0 - f * (i_val - istar)) / netExportSensitivity;
-      }
-      
-      // IS: Calcular novo Y
-      const denominator = 1 - c + m1;
-      if (Math.abs(denominator) < 0.001) break;
-      
-      const Y_new = (A + X0 + x1 * Ystar + (x2 - m2) * E_val - M0 - b * i_val) / denominator;
-      
-      // Verificar convergência
-      if (Math.abs(Y_new - Y) < 1) break;
-      
-      Y = Y_new;
+    // Find E from BP: NX + CK = 0
+    let E_eq = E;
+    if (Math.abs(netExportSensitivity) > 0.001) {
+      E_eq = (M0 + m1 * Y_eq - X0 - x1 * Ystar - K0 - f * (i_eq - istar)) / netExportSensitivity;
     }
-    
+
     return {
-      Y,
-      i: i_val,
-      E: Math.max(0.1, E_val),
+      Y: Y_eq,
+      i: i_eq,
+      E: Math.max(0.1, E_eq),
       M,
-      regime: 'floating-imperfect'
+      regime: isFloating ? (f === 0 ? 'floating-zero' : 'floating-imperfect') : 'fixed'
     };
   } else {
-    // Câmbio Fixo: Sistema de 3 equações (IS, LM, BP)
-    // Resolver numericamente para Y, i, M
+    // Fixed Exchange: IS and BP determine Y and i, LM adjusts M
+    const netX_base = X0 + x1 * Ystar + netExportSensitivity * E - M0;
+    const IS_const = A + netX_base;
+    const BP_const = f * istar - netX_base - K0;
     
-    let Y = 3000;
-    let i_val = istar;
-    let M_val = M;
-    
-    for (let iter = 0; iter < 100; iter++) {
-      // IS: i = (A + X0 + x1*Ystar + (x2-m2)*E - M0 - (1-c+m1)*Y) / b
-      const denominator_IS = 1 - c + m1;
-      if (Math.abs(b) < 0.001) break;
-      
-      i_val = (A + X0 + x1 * Ystar + (x2 - m2) * E - M0 - denominator_IS * Y) / b;
-      
-      // BP: Verificar se está em equilíbrio, ajustar Y se necessário
-      const NX = X0 + x1 * Ystar + x2 * E - M0 - m1 * Y - m2 * E;
-      const CK = K0 + f * (i_val - istar);
-      const BP = NX + CK;
-      
-      // Ajustar Y para equilibrar BP
-      if (Math.abs(BP) > 1) {
-        Y = Y + BP * 0.1; // Ajuste gradual
-      }
-      
-      // LM: M = P * (k*Y - h*i)
-      M_val = P * (k * Y - h * i_val);
-      
-      // Verificar convergência
-      if (Math.abs(BP) < 1) break;
-    }
-    
+    const mult_IS = 1 - c + m1;
+    const det = f * mult_IS + b * m1;
+    if (Math.abs(det) < 0.001) throw new Error('Determinant too small in fixed analytical solution');
+
+    const Y_eq = (f * IS_const - b * BP_const) / det;
+    const i_eq = (mult_IS * BP_const + m1 * IS_const) / det;
+    const M_eq = P * (k * Y_eq - h * i_eq - L0);
+
     return {
-      Y,
-      i: i_val,
+      Y: Y_eq,
+      i: i_eq,
       E,
-      M: Math.max(0, M_val),
-      regime: 'fixed-imperfect'
+      M: Math.max(0, M_eq),
+      regime: f === 0 ? 'fixed-zero' : 'fixed-imperfect'
     };
   }
 }
@@ -237,58 +199,8 @@ function computeImperfectMobility(params, A, isFloating) {
  * Sem mobilidade de capitais (BP vertical)
  */
 function computeZeroMobility(params, A, isFloating) {
-  const { c, b, k, h, m1, x1, x2, m2, X0, M0, Ystar, E, M, P } = params;
-  
-  // BP vertical: Y determinado por NX = 0
-  // X0 + x1*Ystar + x2*E - M0 - m1*Y - m2*E = 0
-  // Y_BP = (X0 + x1*Ystar + (x2-m2)*E - M0) / m1
-  
-  if (Math.abs(m1) < 0.001) {
-    throw new Error('Propensão a importar muito baixa');
-  }
-  
-  const Y_BP = (X0 + x1 * Ystar + (x2 - m2) * E - M0) / m1;
-  
-  if (isFloating) {
-    // Câmbio Flutuante: Y = Y_BP, LM determina i, IS ajusta E
-    const MReal = M / P;
-    const i = (k * Y_BP - MReal) / h;
-    
-    // Calcular E que equilibra IS em Y_BP
-    const netExportSensitivity = x2 - m2;
-    let E_eq = E;
-    
-    if (Math.abs(netExportSensitivity) > 0.001) {
-      E_eq = (b * i - A - X0 - x1 * Ystar + M0 + (1 - c + m1) * Y_BP) / netExportSensitivity;
-    }
-    
-    return {
-      Y: Y_BP,
-      i,
-      E: Math.max(0.1, E_eq),
-      M,
-      regime: 'floating-zero'
-    };
-  } else {
-    // Câmbio Fixo: Y = Y_BP, IS determina i, LM ajusta M
-    const denominator = 1 - c + m1;
-    if (Math.abs(b) < 0.001) {
-      throw new Error('Sensibilidade do investimento muito baixa');
-    }
-    
-    const i = (A + X0 + x1 * Ystar + (x2 - m2) * E - M0 - denominator * Y_BP) / b;
-    
-    // Calcular M que equilibra LM
-    const M_eq = P * (k * Y_BP - h * i);
-    
-    return {
-      Y: Y_BP,
-      i,
-      E,
-      M: Math.max(0, M_eq),
-      regime: 'fixed-zero'
-    };
-  }
+  // Use the universal imperfect formula with f = 0
+  return computeImperfectMobility({ ...params, f: 0 }, A, isFloating);
 }
 
 /**
@@ -298,15 +210,15 @@ export function getISDataExpanded(params, E_value) {
   const { C0, I0, G0, T0, X0, M0, c, b, m1, x1, x2, m2, Ystar } = params;
   
   const A = C0 - c * T0 + I0 + G0;
-  const netExportBase = X0 + x1 * Ystar + (x2 - m2) * E_value - M0;
+  const netExportBase = X0 + x1 * Ystar + (x2 + m2) * E_value - M0;
   const denominator = 1 - c + m1;
   
   if (Math.abs(b) < 0.001) return [];
   
   const data = [];
-  for (let Y = 500; Y <= 25000; Y += 200) {
+  for (let Y = 0; Y <= 10000; Y += 200) {
     const i = (A + netExportBase - denominator * Y) / b;
-    if (isFinite(i) && i >= -5 && i <= 30) {
+    if (isFinite(i) && i >= 0 && i <= 30) {
       data.push({ x: Y, y: i });
     }
   }
@@ -324,9 +236,9 @@ export function getLMDataExpanded(params, M_value) {
   if (Math.abs(h) < 0.001) return [];
   
   const data = [];
-  for (let Y = 500; Y <= 25000; Y += 200) {
+  for (let Y = 0; Y <= 10000; Y += 200) {
     const i = (k * Y - MReal - L0) / h;
-    if (isFinite(i) && i >= -5 && i <= 30) {
+    if (isFinite(i) && i >= 0 && i <= 30) {
       data.push({ x: Y, y: i });
     }
   }
@@ -338,35 +250,38 @@ export function getLMDataExpanded(params, M_value) {
  */
 export function getBPDataExpanded(params, capitalMobility, E_value) {
   const { X0, M0, K0, x1, x2, m1, m2, f, Ystar, istar } = params;
-  
   const data = [];
+  const netExportSensitivity = x2 + m2;
   
   if (capitalMobility === 'perfect') {
-    // BP horizontal em i = i*
-    for (let Y = 500; Y <= 25000; Y += 200) {
+    // BP horizontal em i = istar
+    for (let Y = 0; Y <= 10000; Y += 200) {
       data.push({ x: Y, y: istar });
-    }
-  } else if (capitalMobility === 'zero') {
-    // BP vertical em Y_BP
-    const Y_BP = (X0 + x1 * Ystar + (x2 - m2) * E_value - M0) / m1;
-    for (let i = -5; i <= 30; i += 0.5) {
-      data.push({ x: Y_BP, y: i });
     }
   } else if (capitalMobility === 'imperfect') {
     // BP positivamente inclinada
-    // NX + CK = 0
-    // (X0 + x1*Ystar + x2*E - M0 - m1*Y - m2*E) + (K0 + f*(i - istar)) = 0
-    // Resolvendo para i:
-    // i = istar + (m1*Y - X0 - x1*Ystar - (x2-m2)*E + M0 - K0) / f
-    
-    if (Math.abs(f) < 0.001) return [];
-    
-    const netExportBase = X0 + x1 * Ystar + (x2 - m2) * E_value - M0 - K0;
-    
-    for (let Y = 500; Y <= 25000; Y += 200) {
-      const i = istar + (m1 * Y - netExportBase) / f;
-      if (isFinite(i) && i >= -5 && i <= 30) {
-        data.push({ x: Y, y: i });
+    if (Math.abs(f) >= 0.001) {
+      // Condição BP: NX + CF = 0
+      // (X0 + x1*Ystar + (x2+m2)*E - M0 - m1*Y) + (K0 + f(i - istar)) = 0
+      // netX_E = X0 + x1*Ystar + (x2+m2)*E - M0
+      // f(i - istar) = m1*Y - netX_E - K0
+      const netX_E = X0 + x1 * Ystar + netExportSensitivity * E_value - M0;
+      for (let Y = 0; Y <= 10000; Y += 200) {
+        const i = istar + (m1 * Y - netX_E - K0) / f;
+        if (isFinite(i) && i >= 0 && i <= 30) {
+          data.push({ x: Y, y: i });
+        }
+      }
+    }
+  } else if (capitalMobility === 'zero') {
+    // BP vertical: Y determinado por NX = 0
+    // Y_BP = (X0 + x1*Ystar + (x2+m2)*E - M0) / m1
+    if (Math.abs(m1) >= 0.001) {
+      const Y_BP = (X0 + x1 * Ystar + (x2 + m2) * E_value - M0) / m1;
+      if (Y_BP >= 0 && Y_BP <= 10000) {
+        for (let i = 0; i <= 30; i += 0.5) {
+          data.push({ x: Y_BP, y: i });
+        }
       }
     }
   }
@@ -383,7 +298,7 @@ export function getAggregateComponentsExpanded(params, Y, i, E) {
   const C = C0 + c * (Y - T0);
   const I = I0 - b * i;
   const X = X0 + x1 * Ystar + x2 * E;
-  const Im = M0 + m1 * Y + m2 * E;
+  const Im = M0 + m1 * Y - m2 * E;
   const NX = X - Im;
   
   return {

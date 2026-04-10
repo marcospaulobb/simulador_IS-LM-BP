@@ -102,11 +102,6 @@ As imagens fornecidas confirmam o padrão de cores:
 - **LM** → 🟢 verde (`#22c55e`)
 - **BP** → 🟣 violeta (`#8b5cf6`)
 
-E o comportamento esperado por regime:
-1. **Perfeita Mobilidade + Flutuante**: LM desloca → i < i* → fuga capitais → deprecia e → IS desloca → Y↑, i=i*
-2. **Perfeita Mobilidade + Fixo**: IS desloca → i > i* → entrada capitais → BC intervém → LM desloca → Y↑, i=i*
-3. **Sem Mobilidade + Fixo**: Fiscal eleva Y → piora BP → BC vende reservas → LM retorna
-
 ---
 
 ## 🔢 Parâmetros Padrão (StateManager.js)
@@ -117,15 +112,14 @@ E o comportamento esperado por regime:
 | b | 80 | Sensibilidade do investimento a i |
 | k | 0.50 | Sensibilidade da demanda por moeda à renda |
 | h | 60 | Sensibilidade da demanda por moeda a i |
-| rstar | 14.75% | Taxa de juros externa (Selic Brasil) |
-| E | 5.17 | Taxa de câmbio (R$/USD) |
-| M | 1.200 | Oferta nominal de moeda |
+| rstar | 15.00% | Taxa de juros externa (Selic Brasil) |
+| E | 3.20 | Taxa de câmbio (Equilíbrio centralizado) |
+| M | 1.750 | Oferta nominal de moeda |
 | G | 3.200 | Gastos do governo |
 | T | 3.500 | Tributação |
 | X0 | 1.500 | Exportações autônomas |
-| m | 0.25 | Propensão marginal a importar |
-
-> **Equilíbrio LM padrão:** r = (0.5×Y − 1200) / 60 → em i = 14.75%: **Y ≈ 4.170** ✓ visível no gráfico
+| M0 | 1.300 | Importações autônomas |
+| m1 | 0.25 | Propensão marginal a importar |
 
 ---
 
@@ -134,7 +128,6 @@ E o comportamento esperado por regime:
 - [ ] Animação de deslocamento de curva (IS₁ → IS₂ com seta visível no gráfico)
 - [ ] Painel didático lateral mostrando o "passo a passo" do mecanismo de transmissão
 - [ ] Exportar gráfico como imagem PNG/SVG para uso em slides
-- [ ] Calibrar os parâmetros padrão para cada modo (ex.: rstar menor para economia fechada)
 - [ ] Otimizar chunk size (build > 500 kB — usar `rollupOptions.output.manualChunks`)
 
 ---
@@ -144,8 +137,10 @@ E o comportamento esperado por regime:
 | Arquivo | Tipo de Mudança |
 |---|---|
 | `index.html` | Cabeçalho redesenhado: 2 modelos + Mobilidade + Câmbio |
-| `src/main-new.js` | Listeners limpos, `applyModelType`, `showBP`, `exchangeRegime` |
-| `src/model.js` | `getISData`, `getLMData`, `getBPData` — clipping para range visível |
-| `src/chart.js` | `adjustAxes` → eixos fixos; `initChart` com bounds corretos |
-| `src/ui/UIController.js` | Reescrita completa — sem referências mortas |
-| `src/ui/ExplanationEngine.js` | 7 textos explicativos por combinação de regime |
+| `src/main-new.js` | Listeners limpos, calibração de parâmetros e ativação do Modelo Expandido. |
+| `src/model-expanded.js` | Implementação de Solvers Analíticos e sincronização de sinais (NX, BP, L0). |
+| `src/model.js` | Clipping para range visível e tratamento de mobilidade nula. |
+| `src/chart.js` | Eixos fixos e renderização otimizada do ponto de equilíbrio. |
+| `src/ui/UIController.js` | Sincronização de inputs e sliders com estado endógeno. |
+| `src/ui/ExplanationEngine.js` | Explicações dinâmicas para 6 regimes + fallback para Mobilidade Nula. |
+| `src/state/StateManager.js` | Gerenciamento de aliases e ranges de validação ampliados. |

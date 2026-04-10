@@ -50,10 +50,11 @@ export class UIController {
   }
 
   /**
-   * Format and display a parameter value.
+   * Format and display a parameter value, and update its slider.
    */
   updateDisplay(key, value) {
     const display = this.displays[key];
+    const slider = this.sliders[key];
     if (!display) return;
 
     let formatted;
@@ -67,6 +68,10 @@ export class UIController {
 
     if (document.activeElement !== display) {
       display.value = formatted;
+    }
+    
+    if (slider) {
+      slider.value = value;
     }
   }
 

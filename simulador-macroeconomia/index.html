@@ -6,6 +6,21 @@
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Simulador IS-LM & Mundell-Fleming | Mackenzie</title>
+  
+  <!-- MathJax for high-quality equations -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+      }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script" async></script>
+  
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -224,46 +239,46 @@
               <div class="control-group-enhanced">
                 <div class="flex justify-between mb-1">
                   <label class="text-xs font-semibold">Gasto Público (G)</label>
-                  <input type="number" id="val-G" min="1000" max="3500" step="100" value="2200"
+                  <input type="number" id="val-G" min="500" max="4000" step="100" value="1500"
                     class="text-xs font-bold text-mackenzie-green val-input w-16 text-right border p-0.5">
                 </div>
-                <input type="range" id="slider-G" min="1000" max="3500" step="100" value="2200"
+                <input type="range" id="slider-G" min="500" max="4000" step="100" value="1500"
                   class="w-full h-1.5 slider-enhanced">
               </div>
               <div class="control-group-enhanced">
                 <div class="flex justify-between mb-1">
                   <label class="text-xs font-semibold">Tributação (T)</label>
-                  <input type="number" id="val-T" min="2000" max="5000" step="100" value="3500"
+                  <input type="number" id="val-T" min="500" max="4000" step="100" value="3000"
                     class="text-xs font-bold text-mackenzie-green val-input w-16 text-right border p-0.5">
                 </div>
-                <input type="range" id="slider-T" min="2000" max="5000" step="100" value="3500"
+                <input type="range" id="slider-T" min="500" max="4000" step="100" value="3000"
                   class="w-full h-1.5 slider-enhanced">
               </div>
               <div class="control-group-enhanced">
                 <div class="flex justify-between mb-1">
                   <label class="text-xs font-semibold">Oferta de Moeda (M/P)</label>
-                  <input type="number" id="val-M" min="800" max="3000" step="100" value="1800"
+                  <input type="number" id="val-M" min="500" max="3500" step="100" value="1750"
                     class="text-xs font-bold text-mackenzie-green val-input w-16 text-right border p-0.5">
                 </div>
-                <input type="range" id="slider-M" min="800" max="3000" step="100" value="1800"
+                <input type="range" id="slider-M" min="500" max="3500" step="100" value="1750"
                   class="w-full h-1.5 slider-enhanced">
               </div>
               <div class="control-group-enhanced open-eco-group hidden">
                 <div class="flex justify-between mb-1">
                   <label class="text-xs font-semibold">Taxa de Câmbio (e)</label>
-                  <input type="number" id="val-e" min="4.0" max="6.0" step="0.01" value="5.17"
+                  <input type="number" id="val-e" min="1.0" max="8.0" step="0.1" value="3.2"
                     class="text-xs font-bold text-purple-600 val-input w-16 text-right border p-0.5">
                 </div>
-                <input type="range" id="slider-e" min="4.0" max="6.0" step="0.01" value="5.17"
+                <input type="range" id="slider-e" min="1.0" max="8.0" step="0.1" value="3.2"
                   class="w-full h-1.5 slider-enhanced accent-purple-600">
               </div>
               <div class="control-group-enhanced open-eco-group hidden">
                 <div class="flex justify-between mb-1">
                   <label class="text-xs font-semibold">Tx. Juros Int. (r*)</label>
-                  <input type="number" id="val-rstar" min="1.0" max="12.0" step="0.25" value="5.25"
+                  <input type="number" id="val-rstar" min="1.0" max="25.0" step="0.25" value="15.0"
                     class="text-xs font-bold text-purple-600 val-input w-16 text-right border p-0.5">
                 </div>
-                <input type="range" id="slider-rstar" min="1.0" max="12.0" step="0.25" value="5.25"
+                <input type="range" id="slider-rstar" min="1.0" max="25.0" step="0.25" value="15.0"
                   class="w-full h-1.5 slider-enhanced accent-purple-600">
               </div>
             </div>
@@ -277,31 +292,6 @@
             <div class="absolute left-0 top-0 w-1 h-full bg-blue-500"></div>
             <h3 class="text-[10px] font-bold text-blue-800 uppercase tracking-wide mb-2 pl-2">Componentes Autônomos</h3>
             <div class="grid grid-cols-2 gap-2 pl-2">
-              <div>
-                <label class="text-[10px] font-semibold text-gray-600">C0 (Consumo)</label>
-                <input type="number" id="param-C0" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
-                  value="1500" step="100">
-              </div>
-              <div>
-                <label class="text-[10px] font-semibold text-gray-600">I0 (Investimento)</label>
-                <input type="number" id="param-I0" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
-                  value="2000" step="100">
-              </div>
-              <div class="open-eco-group hidden">
-                <label class="text-[10px] font-semibold text-gray-600">X0 (Exportações)</label>
-                <input type="number" id="param-X0" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
-                  value="1500" step="100">
-              </div>
-              <div class="open-eco-group hidden">
-                <label class="text-[10px] font-semibold text-gray-600">M0 (Importações)</label>
-                <input type="number" id="param-M0" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
-                  value="1300" step="100">
-              </div>
-              <div>
-                <label class="text-[10px] font-semibold text-gray-600">L0 (Dem. Moeda)</label>
-                <input type="number" id="param-L0" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
-                  value="0" step="10">
-              </div>
               <div class="open-eco-group hidden">
                 <label class="text-[10px] font-semibold text-gray-600">K0 (Fluxo Capital)</label>
                 <input type="number" id="param-K0" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
@@ -322,19 +312,19 @@
               <div class="control-group-enhanced-small">
                 <div class="flex justify-between mb-1">
                   <label class="text-[11px] font-medium text-gray-700">PMgC (c)</label>
-                  <input type="number" id="val-c" min="0.1" max="0.9" step="0.05" value="0.6"
+                  <input type="number" id="val-c" min="0.1" max="0.9" step="0.05" value="0.65"
                     class="text-xs font-bold border rounded w-12 text-right">
                 </div>
-                <input type="range" id="slider-c" min="0.1" max="0.9" step="0.05" value="0.6"
+                <input type="range" id="slider-c" min="0.1" max="0.9" step="0.05" value="0.65"
                   class="w-full h-1 bg-gray-200 accent-gray-600">
               </div>
               <div class="control-group-enhanced-small">
                 <div class="flex justify-between mb-1">
                   <label class="text-[11px] font-medium text-gray-700">Sen. Inv (b)</label>
-                  <input type="number" id="val-b" min="10" max="100" step="5" value="50"
+                  <input type="number" id="val-b" min="10" max="150" step="5" value="60"
                     class="text-xs font-bold border rounded w-12 text-right">
                 </div>
-                <input type="range" id="slider-b" min="10" max="100" step="5" value="50"
+                <input type="range" id="slider-b" min="10" max="150" step="5" value="60"
                   class="w-full h-1 bg-gray-200 accent-gray-600">
               </div>
               <div class="control-group-enhanced-small">
@@ -349,10 +339,10 @@
               <div class="control-group-enhanced-small">
                 <div class="flex justify-between mb-1">
                   <label class="text-[11px] font-medium text-gray-700">Sen. Moeda r (h)</label>
-                  <input type="number" id="val-h" min="10" max="150" step="5" value="60"
+                  <input type="number" id="val-h" min="10" max="150" step="5" value="50"
                     class="text-xs font-bold border rounded w-12 text-right">
                 </div>
-                <input type="range" id="slider-h" min="10" max="150" step="5" value="60"
+                <input type="range" id="slider-h" min="10" max="150" step="5" value="50"
                   class="w-full h-1 bg-gray-200 accent-gray-600">
               </div>
             </div>
@@ -369,12 +359,12 @@
               <div>
                 <label class="text-[10px] font-semibold text-gray-600">x1 (Exp à Renda)</label>
                 <input type="number" id="param-x1" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
-                  value="0.15" step="0.01">
+                  value="0.10" step="0.01">
               </div>
               <div>
                 <label class="text-[10px] font-semibold text-gray-600">x2 (Exp ao Câmbio)</label>
                 <input type="number" id="param-x2" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
-                  value="300" step="10">
+                  value="100" step="10">
               </div>
               <div>
                 <label class="text-[10px] font-semibold text-gray-600">m2 (Imp ao Câmbio)</label>
@@ -389,7 +379,7 @@
               <div>
                 <label class="text-[10px] font-semibold text-gray-600">Y* (Renda Externa)</label>
                 <input type="number" id="param-Ystar" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
-                  value="12000" step="100">
+                  value="2000" step="100">
               </div>
               <div>
                 <label class="text-[10px] font-semibold text-gray-600">P (Nível de Preços)</label>
