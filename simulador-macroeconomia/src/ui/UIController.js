@@ -1,5 +1,6 @@
 /**
  * UI Controller - Manages all UI interactions
+ * Clean version: no references to old toggle elements
  */
 import gsap from 'gsap';
 
@@ -12,257 +13,171 @@ export class UIController {
   }
 
   initElements() {
-    // Sliders
+    // Sliders & numeric inputs
     const sliderIds = ['G', 'T', 'M', 'e', 'rstar', 'c', 'b', 'k', 'h'];
     sliderIds.forEach(id => {
       this.sliders[id] = document.getElementById(`slider-${id}`);
       this.displays[id] = document.getElementById(`val-${id}`);
     });
 
-    // Toggles
-    this.toggleModel = document.getElementById('model-toggle');
-    this.labelModel = document.getElementById('model-label');
-    this.toggleExchangeContainer = document.getElementById('exchange-toggle-container');
-    this.toggleExchange = document.getElementById('exchange-toggle');
-    this.labelExchange = document.getElementById('exchange-label');
-    
-    // Groups
+    // Panel groups that show/hide based on open economy
     this.openEcoGroups = document.querySelectorAll('.open-eco-group');
-    this.openEcoBtns = document.querySelectorAll('.open-eco-btn');
-    this.hint_e = document.getElementById('hint-e');
-    
-    // Text
+    this.openEcoBtns   = document.querySelectorAll('.open-eco-btn');
+    this.hint_e        = document.getElementById('hint-e');
+
+    // Text areas
     this.explanationText = document.getElementById('explanation-text');
-    this.structuralText = document.getElementById('structural-text');
+    this.structuralText  = document.getElementById('structural-text');
   }
 
   /**
-   * Update all UI elements from state
+   * Update all UI elements from state.
+   * Called after any state change.
    */
   updateFromState(state) {
-    // Update slider and input values
+    // --- Sliders ---
     Object.keys(this.sliders).forEach(key => {
-      if (state.params[key] !== undefined) {
-        this.sliders[key].value = state.params[key];
-        this.updateDisplay(key, state.params[key]);
-      }
+      const slider  = this.sliders[key];
+      const display = this.displays[key];
+      if (!slider || state.params[key] === undefined) return;
+      slider.value = state.params[key];
+      this.updateDisplay(key, state.params[key]);
     });
 
-    // Update toggles
-    this.toggleModel.checked = state.isOpenEconomy;
-    this.toggleExchange.checked = state.isFloatingRate;
-    
+    // --- Panel visibility (side panel params) ---
     this.updateEconomyUI(state.isOpenEconomy);
     this.updateExchangeUI(state.isOpenEconomy, state.isFloatingRate);
   }
 
   /**
-   * Update display value (agora são inputs editáveis)
+   * Format and display a parameter value.
    */
   updateDisplay(key, value) {
-    if (!this.displays[key]) return;
-    
-    // Formatar valor baseado no tipo
-    let formattedValue;
+    const display = this.displays[key];
+    if (!display) return;
+
+    let formatted;
     if (key === 'c' || key === 'k' || key === 'e') {
-      formattedValue = parseFloat(value).toFixed(2);
+      formatted = parseFloat(value).toFixed(2);
     } else if (key === 'rstar') {
-      formattedValue = parseFloat(value).toFixed(2);
+      formatted = parseFloat(value).toFixed(2);
     } else {
-      formattedValue = Math.round(value);
+      formatted = Math.round(value);
     }
-    
-    // Atualizar o input apenas se não estiver focado (para não interferir com digitação)
-    if (document.activeElement !== this.displays[key]) {
-      this.displays[key].value = formattedValue;
+
+    if (document.activeElement !== display) {
+      display.value = formatted;
     }
   }
-  
+
   /**
-   * Setup input listeners for direct value editing
-   * Deve ser chamado após a inicialização, passando o callback de atualização
+   * Wire direct-edit inputs so users can type values.
    */
   setupInputListeners(onValueChange) {
     Object.keys(this.displays).forEach(key => {
-      const input = this.displays[key];
+      const input  = this.displays[key];
       const slider = this.sliders[key];
-      
       if (!input || !slider) return;
-      
-      // Listener para quando o input perde o foco
+
       input.addEventListener('blur', () => {
         let value = parseFloat(input.value);
         const min = parseFloat(slider.min);
         const max = parseFloat(slider.max);
-        
-        // Validar limites
         if (isNaN(value)) {
           value = parseFloat(slider.value);
         } else {
           value = Math.max(min, Math.min(max, value));
         }
-        
-        // Atualizar slider
         slider.value = value;
-        input.value = value;
-        
-        // Chamar callback para atualizar state e gráfico
+        input.value  = value;
         onValueChange(key, value);
       });
-      
-      // Listener para Enter
+
       input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          input.blur(); // Trigger blur event
-        }
+        if (e.key === 'Enter') input.blur();
       });
-      
-      // Listener para input em tempo real (opcional, para feedback imediato)
+
       input.addEventListener('input', () => {
         const value = parseFloat(input.value);
         if (!isNaN(value)) {
           const min = parseFloat(slider.min);
           const max = parseFloat(slider.max);
-          const clampedValue = Math.max(min, Math.min(max, value));
-          slider.value = clampedValue;
+          slider.value = Math.max(min, Math.min(max, value));
         }
       });
     });
   }
 
   /**
-   * Update economy type UI
+   * Show/hide sidebar parameter groups for open economy.
    */
   updateEconomyUI(isOpen) {
-    this.labelModel.innerText = isOpen 
-      ? 'Economia Aberta (IS-LM-BP)' 
-      : 'Economia Fechada (IS-LM)';
-    
-    if (isOpen) {
-      this.toggleExchangeContainer.classList.remove('hidden');
-      this.openEcoGroups.forEach(g => g.classList.remove('hidden'));
-      this.openEcoBtns.forEach(b => b.classList.remove('hidden'));
-    } else {
-      this.toggleExchangeContainer.classList.add('hidden');
-      this.openEcoGroups.forEach(g => g.classList.add('hidden'));
-      this.openEcoBtns.forEach(b => b.classList.add('hidden'));
-    }
+    this.openEcoGroups.forEach(g => g.classList.toggle('hidden', !isOpen));
+    this.openEcoBtns.forEach(b => b.classList.toggle('hidden', !isOpen));
   }
 
   /**
-   * Update exchange regime UI
+   * Enable/disable sliders based on exchange regime.
+   * In floating rate: M is exogenous, e is endogenous.
+   * In fixed rate:    e is exogenous, M is endogenous.
    */
   updateExchangeUI(isOpen, isFloating) {
-    this.labelExchange.innerText = isFloating 
-      ? 'Câmbio Flutuante' 
-      : 'Câmbio Fixo';
-    
+    const sM = this.sliders.M;
+    const se = this.sliders.e;
+    if (!sM || !se) return;
+
     if (!isOpen) {
-      // Economia fechada: M é sempre exógeno, e não existe
-      this.sliders.M.disabled = false;
-      this.sliders.M.style.opacity = '1';
-      if (this.sliders.e) {
-        this.sliders.e.disabled = true;
-        this.sliders.e.style.opacity = '0.5';
-      }
-      if (this.hint_e) {
-        this.hint_e.classList.add('hidden');
-      }
+      // Closed economy: M free, e irrelevant
+      sM.disabled = false; sM.style.opacity = '1';
+      se.disabled = true;  se.style.opacity = '0.5';
+      if (this.hint_e) this.hint_e.classList.add('hidden');
       return;
     }
-    
+
     if (isFloating) {
-      // M is exogenous, e is endogenous
-      this.sliders.M.disabled = false;
-      this.sliders.M.style.opacity = '1';
-      this.sliders.e.disabled = true;
-      this.sliders.e.style.opacity = '0.5';
-      this.hint_e.classList.remove('hidden');
+      sM.disabled = false; sM.style.opacity = '1';
+      se.disabled = true;  se.style.opacity = '0.5';
+      if (this.hint_e) this.hint_e.classList.remove('hidden');
     } else {
-      // e is exogenous, M is endogenous
-      this.sliders.e.disabled = false;
-      this.sliders.e.style.opacity = '1';
-      this.sliders.M.disabled = true;
-      this.sliders.M.style.opacity = '0.5';
-      this.hint_e.classList.add('hidden');
+      se.disabled = false; se.style.opacity = '1';
+      sM.disabled = true;  sM.style.opacity = '0.5';
+      if (this.hint_e) this.hint_e.classList.add('hidden');
     }
   }
 
-  /**
-   * Update explanation text with animation
-   */
   updateExplanation(text) {
-    gsap.fromTo(
-      this.explanationText, 
-      { opacity: 0 }, 
-      { opacity: 1, duration: 0.5 }
-    );
+    if (!this.explanationText) return;
+    gsap.fromTo(this.explanationText, { opacity: 0 }, { opacity: 1, duration: 0.4 });
     this.explanationText.innerHTML = text;
   }
 
-  /**
-   * Update structural parameters explanation
-   */
   updateStructuralExplanation(text) {
-    gsap.fromTo(
-      this.structuralText, 
-      { opacity: 0 }, 
-      { opacity: 1, duration: 0.5 }
-    );
+    if (!this.structuralText) return;
+    gsap.fromTo(this.structuralText, { opacity: 0 }, { opacity: 1, duration: 0.4 });
     this.structuralText.innerHTML = text;
   }
 
-  /**
-   * Animate slider on shock
-   */
   animateSlider(sliderId) {
     const slider = this.sliders[sliderId];
     if (slider) {
-      gsap.fromTo(
-        slider, 
-        { scale: 1.05 }, 
-        { scale: 1.0, duration: 0.2, clearProps: "all" }
-      );
+      gsap.fromTo(slider, { scale: 1.05 }, { scale: 1.0, duration: 0.2, clearProps: 'all' });
     }
   }
 
-  /**
-   * Show notification
-   */
   showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `fixed top-20 right-4 px-6 py-3 rounded-lg shadow-lg z-[200] ${
-      type === 'success' ? 'bg-green-500' :
-      type === 'error' ? 'bg-red-500' :
-      type === 'warning' ? 'bg-yellow-500' :
-      'bg-blue-500'
-    } text-white font-semibold`;
-    notification.textContent = message;
-    
-    document.body.appendChild(notification);
-    
-    gsap.fromTo(
-      notification,
-      { opacity: 0, y: -20 },
-      { opacity: 1, y: 0, duration: 0.3 }
-    );
-    
+    const colors = { success: 'bg-green-500', error: 'bg-red-500', warning: 'bg-yellow-500', info: 'bg-blue-500' };
+    const el = document.createElement('div');
+    el.className = `fixed top-20 right-4 px-6 py-3 rounded-lg shadow-lg z-[200] ${colors[type] || colors.info} text-white font-semibold`;
+    el.textContent = message;
+    document.body.appendChild(el);
+    gsap.fromTo(el, { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.3 });
     setTimeout(() => {
-      gsap.to(notification, {
-        opacity: 0,
-        y: -20,
-        duration: 0.3,
-        onComplete: () => notification.remove()
-      });
+      gsap.to(el, { opacity: 0, y: -20, duration: 0.3, onComplete: () => el.remove() });
     }, 3000);
   }
 
-  /**
-   * Show loading state
-   */
   showLoading(show = true) {
     let loader = document.getElementById('app-loader');
-    
     if (show && !loader) {
       loader = document.createElement('div');
       loader.id = 'app-loader';

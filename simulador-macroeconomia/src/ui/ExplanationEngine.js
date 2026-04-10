@@ -11,7 +11,7 @@ export class ExplanationEngine {
    * Generate explanation based on context
    */
   getExplanation(context) {
-    const { cause, direction, isOpenEconomy, isFloatingRate, scenario, equilibrium, params } = context;
+    const { cause, direction, isOpenEconomy, isFloatingRate, capitalMobility, scenario, equilibrium, params } = context;
     
     // Scenario explanation takes precedence
     if (scenario && scenario.explanation) {
@@ -20,7 +20,7 @@ export class ExplanationEngine {
     
     // Default explanation
     if (!cause) {
-      return this.getDefaultExplanation(isOpenEconomy, isFloatingRate, equilibrium, params);
+      return this.getDefaultExplanation(isOpenEconomy, isFloatingRate, equilibrium, params, capitalMobility);
     }
     
     // Shock-based explanation
@@ -30,49 +30,90 @@ export class ExplanationEngine {
   /**
    * Default explanation with equilibrium values
    */
-  getDefaultExplanation(isOpen, isFloating, eq, params) {
-    let explanation = '';
-    
-    if (isOpen) {
-      explanation = isFloating 
-        ? `<strong>📊 Modelo: Economia Aberta com Câmbio Flutuante (Mundell-Fleming)</strong><br><br>
-           Neste regime, a taxa de câmbio se ajusta automaticamente para equilibrar o balanço de pagamentos. 
-           A curva BP é horizontal em r* = ${params?.rstar?.toFixed(2) || 'N/A'}% (mobilidade perfeita de capitais).<br><br>
-           <strong>Política Monetária:</strong> EFICAZ - Altera Y através do canal cambial<br>
-           <strong>Política Fiscal:</strong> INEFICAZ - Neutralizada pela valorização cambial`
-        : `<strong>📊 Modelo: Economia Aberta com Câmbio Fixo</strong><br><br>
-           O Banco Central intervém comprando/vendendo reservas para manter e = ${params?.e?.toFixed(2) || 'N/A'} R$/USD constante. 
-           Isso altera endogenamente a oferta de moeda (M).<br><br>
-           <strong>Política Fiscal:</strong> MUITO EFICAZ - Amplificada pela expansão monetária automática<br>
-           <strong>Política Monetária:</strong> INEFICAZ - Revertida pela intervenção cambial`;
-    } else {
-      explanation = `<strong>📊 Modelo: Economia Fechada (IS-LM Clássico)</strong><br><br>
-                     O equilíbrio ocorre onde o mercado de bens (IS) cruza com o mercado monetário (LM). 
-                     Não há comércio internacional nem fluxos de capital.<br><br>
-                     <strong>Política Fiscal:</strong> EFICAZ - Desloca IS, mas com crowding out<br>
-                     <strong>Política Monetária:</strong> EFICAZ - Desloca LM, alterando juros e investimento`;
+  getDefaultExplanation(isOpen, isFloating, eq, params, capitalMobility) {
+    let html = '';
+
+    // ── IS-LM Fechado ──
+    if (!isOpen) {
+      html = `<strong>📊 IS-LM — Economia Fechada</strong><br><br>
+Sem comércio internacional nem fluxos de capital. O equilíbrio ocorre onde o mercado de bens (IS) cruza o mercado monetário (LM).<br><br>
+<strong>Política Fiscal:</strong> EFICAZ — Desloca IS, mas com efeito crowding-out sobre o investimento.<br>
+<strong>Política Monetária:</strong> EFICAZ — Desloca LM, altera juros e estimula investimento.`;
     }
-    
-    // Add equilibrium values
+
+    // ── IS-LM-BP: Mobilidade Perfeita ──
+    else if (capitalMobility === 'perfect') {
+      const istar = params?.rstar?.toFixed(2) || params?.istar?.toFixed(2) || 'i*';
+      if (isFloating) {
+        html = `<strong>📊 IS-LM-BP — Mobilidade Perfeita de Capitais · Câmbio Flutuante</strong><br><br>
+<em>Ativos domésticos/estrangeiros perfeitamente substituíveis; equilíbrio BP só depende de i = i* = ${istar}%.</em><br><br>
+<strong>🔵 Política Fiscal:</strong> <span style="color:#dc2626">INEFICAZ</span><br>
+→ Expansão IS eleva i acima de i* → entrada de capitais aprecia e (câmbio cai) → reduz exportações líquidas (Xn) → IS retorna ao ponto inicial.<br><br>
+<strong>🟢 Política Monetária:</strong> <span style="color:#16a34a">SUPER EFICAZ</span><br>
+→ Expansão LM baixa i abaixo de i* → saída de capitais deprecia e → eleva Xn → IS desloca à direita → Y aumenta fortemente via canal cambial.`;
+      } else {
+        html = `<strong>📊 IS-LM-BP — Mobilidade Perfeita de Capitais · Câmbio Fixo</strong><br><br>
+<em>Ativos domésticos/estrangeiros perfeitamente substituíveis; equilíbrio BP só depende de i = i* = ${istar}%.</em><br><br>
+<strong>🔵 Política Fiscal:</strong> <span style="color:#16a34a">EFICAZ</span><br>
+→ Expansão IS eleva i acima de i* → entrada de capitais pressiona valorização → BC compra moeda para fixar e, expandindo M automaticamente → LM desloca à direita, sustentando Y maior.<br><br>
+<strong>🟢 Política Monetária:</strong> <span style="color:#dc2626">INEFICAZ</span><br>
+→ Expansão LM baixa i abaixo de i* → saída de capitais pressiona desvalorização → BC vende reservas, reabsorvendo moeda → LM retorna ao ponto inicial.`;
+      }
+    }
+
+    // ── IS-LM-BP: Mobilidade Imperfeita ──
+    else if (capitalMobility === 'imperfect') {
+      if (isFloating) {
+        html = `<strong>📊 IS-LM-BP — Mobilidade Imperfeita de Capitais · Câmbio Flutuante</strong><br><br>
+<em>Equilíbrio BP depende de Y (transações correntes) e i (capitais); inclinação positiva reflete elasticidades.</em><br><br>
+<strong>🔵 Política Fiscal:</strong> <span style="color:#16a34a">MODERADAMENTE EFICAZ</span><br>
+→ Expansão IS eleva Y e i → apreciação parcial de e reduz Xn, mas não totalmente → equilíbrio em Y e i mais altos, com ajuste cambial parcial.<br><br>
+<strong>🟢 Política Monetária:</strong> <span style="color:#16a34a">MAIS EFICAZ QUE FISCAL</span><br>
+→ Expansão LM baixa i → saída de capitais deprecia e → Xn sobe → maior ajuste em Y. Equilíbrio com volatilidade cambial maior.`;
+      } else {
+        html = `<strong>📊 IS-LM-BP — Mobilidade Imperfeita de Capitais · Câmbio Fixo</strong><br><br>
+<em>Equilíbrio BP depende de Y (transações correntes) e i (capitais); inclinação positiva reflete elasticidades.</em><br><br>
+<strong>🔵 Políticas Mistas:</strong> <span style="color:#16a34a">EFICAZES</span><br>
+→ Expansão fiscal eleva Y e i → entrada de capitais pressiona valorização → BC intervém vendendo reservas para fixar e → expansão moderada de Y com juros mais altos.<br><br>
+<strong>🟢 Política Monetária:</strong> PARCIALMENTE EFICAZ<br>
+→ Queda de i aumenta déficits BP (saída de capitais), mas Y cresce moderadamente. BC intervém com reservas para manter e fixo.`;
+      }
+    }
+
+    // ── IS-LM-BP: Sem Mobilidade (BP Vertical) ──
+    else if (capitalMobility === 'zero') {
+      if (isFloating) {
+        html = `<strong>📊 IS-LM-BP — Sem Mobilidade de Capitais · Câmbio Flutuante</strong><br><br>
+<em>Sem fluxos de capitais; BP = apenas transações correntes Xn(Y, e). BP vertical.</em><br><br>
+<strong>🔵 Política Fiscal:</strong> <span style="color:#dc2626">INEFICAZ</span><br>
+→ Expansão IS aumenta Y → piora BP (mais importações) → deprecia e, restaurando Xn → IS retorna e Y muda pouco.<br><br>
+<strong>🟢 Política Monetária:</strong> <span style="color:#16a34a">EFICAZ</span><br>
+→ Expansão LM baixa i → deprecia e → eleva Xn → IS desloca à direita → Y aumenta. Ajuste se dá inteiramente pelo câmbio.`;
+      } else {
+        html = `<strong>📊 IS-LM-BP — Sem Mobilidade de Capitais · Câmbio Fixo</strong><br><br>
+<em>Sem fluxos de capitais; BP = apenas transações correntes Xn(Y, e). BP vertical.</em><br><br>
+<strong>🔵 Política Fiscal:</strong> <span style="color:#16a34a">EFICAZ</span><br>
+→ Expansão IS aumenta Y → piora BP → BC intervém com reservas para fixar e → Y sobe mas com perda de reservas.<br><br>
+<strong>🟢 Política Monetária:</strong> LIMITADA<br>
+→ Expansão LM pode conflitar com nível de reservas do BC. Se reservas forem baixas, a sustentação do câmbio é comprometida.`;
+      }
+    }
+
+    // Fallback
+    else {
+      html = `<strong>📊 Modelo IS-LM-BP</strong><br><br>Selecione uma combinação de Mobilidade e Câmbio para ver a análise detalhada.`;
+    }
+
+    // Equilibrium values
     if (eq) {
-      explanation += `<br><br><strong>🎯 Equilíbrio Atual:</strong><br>`;
-      explanation += `• Renda (Y): ${Math.round(eq.Y)} (≈ R$ ${(eq.Y * 100).toFixed(0)} bilhões)<br>`;
-      explanation += `• Taxa de Juros (i): ${eq.r?.toFixed(2)}%<br>`;
-      
-      if (isOpen && isFloating && eq.e_eq) {
-        explanation += `• Taxa de Câmbio (e): R$ ${eq.e_eq.toFixed(2)}/USD<br>`;
-      }
-      if (isOpen && !isFloating && eq.M_eq) {
-        explanation += `• Oferta de Moeda (M): ${Math.round(eq.M_eq)}<br>`;
-      }
+      html += `<br><br><strong>🎯 Equilíbrio Atual:</strong><br>`;
+      html += `• Renda (Y): ${Math.round(eq.Y)}<br>`;
+      html += `• Taxa de Juros (i): ${eq.r?.toFixed(2)}%<br>`;
+      if (isOpen && isFloating && eq.e_eq)  html += `• Câmbio (e): R$ ${eq.e_eq.toFixed(2)}/USD<br>`;
+      if (isOpen && !isFloating && eq.M_eq) html += `• Oferta de Moeda (M): ${Math.round(eq.M_eq)}<br>`;
     }
-    
-    // Add component analysis
-    if (params) {
-      explanation += this.getComponentAnalysis(params, eq, isOpen);
-    }
-    
-    return explanation;
+
+    return html;
   }
 
   /**

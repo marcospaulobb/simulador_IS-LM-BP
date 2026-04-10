@@ -93,22 +93,21 @@ export function computeEquilibrium(params, isOpen, isFloating, capitalMobility =
 }
 
 export function getISData(params, isOpen, dynamic_e) {
-  const { G, T, c, b, C0, I0, X0, m, v, x1, Ystar } = params;
   const real_G = params.G || params.G0 || 0;
   const real_T = params.T || params.T0 || 0;
   const real_m = (params.m !== undefined) ? params.m : (params.m1 || 0.12);
   const real_v = params.v || params.x2 || 200;
-  
-  const A = C0 - c * real_T + I0 + real_G;
-  const X_total = X0 + (x1 || 0) * (Ystar || 0);
+  const { c, b, C0, I0, X0, x1, Ystar } = params;
 
-  const mult = isOpen ? (1 - c + real_m) : (1 - c);
-  const add = isOpen ? (X_total + real_v * dynamic_e) : 0;
-  
+  const A       = C0 - c * real_T + I0 + real_G;
+  const X_total = X0 + (x1 || 0) * (Ystar || 0);
+  const mult    = isOpen ? (1 - c + real_m) : (1 - c);
+  const add     = isOpen ? (X_total + real_v * dynamic_e) : 0;
+
   const data = [];
-  for (let Y = 0; Y <= 25000; Y += 250) {
+  for (let Y = 0; Y <= 14000; Y += 200) {
     const r = (A + add - mult * Y) / b;
-    if (isFinite(r) && r >= -20 && r <= 60) {
+    if (isFinite(r) && r >= 0 && r <= 40) {
       data.push({ x: Y, y: r });
     }
   }
@@ -118,48 +117,62 @@ export function getISData(params, isOpen, dynamic_e) {
 export function getLMData(params, dynamic_M) {
   const { k, h, L0 } = params;
   const L_base = L0 || 0;
-  
+
   const data = [];
-  for (let Y = 0; Y <= 25000; Y += 250) {
+  for (let Y = 0; Y <= 14000; Y += 200) {
     const r = (k * Y - dynamic_M - L_base) / h;
-    if (isFinite(r) && r >= -20 && r <= 60) {
+    if (isFinite(r) && r >= 0 && r <= 40) {
       data.push({ x: Y, y: r });
     }
   }
   return data;
 }
 
-export function getBPData(rstar, capitalMobility = 'perfect', params = null) {
+export function getBPData(rstar, capitalMobility = 'perfect', params = null, dynamic_e = null) {
   if (!params) return [];
   const { X0, x1, Ystar, v, x2, e, E, m, m1, f, K0 } = params;
-  
-  const real_e = e || E || 5.0;
-  const real_m = (m !== undefined) ? m : (m1 || 0.12);
-  const real_v = v || x2 || 200;
-  const X_total = X0 + (x1 || 0) * (Ystar || 0);
-  const real_f = f || 100;
-  const real_K0 = K0 || 0;
+
+  const real_e     = dynamic_e !== null ? dynamic_e : (e || E || 5.0);
+  const real_m     = (m !== undefined) ? m : (m1 || 0.12);
+  const real_v     = v || x2 || 200;
+  const X_total    = X0 + (x1 || 0) * (Ystar || 0);
+  const real_f     = f || 100;
+  const real_K0    = K0 || 0;
   const real_rstar = rstar || params.istar || 5.0;
 
+  // Chart bounds (must match the static axes in chart.js)
+  const Y_MIN = 0, Y_MAX = 14000;
+  const R_MIN = 0, R_MAX = 40;
+
   const data = [];
+
   if (capitalMobility === 'zero') {
-    let Y_BP = (X_total + real_v * real_e) / real_m;
-    for (let r = -20; r <= 60; r += 2) {
-      data.push({ x: Y_BP, y: r });
-    }
+    // BP vertical: one fixed Y value across the full visible r range
+    const Y_BP = (X_total + real_v * real_e) / real_m;
+    // Clamp to chart bounds
+    const Y_clamped = Math.max(Y_MIN, Math.min(Y_MAX, Y_BP));
+    // Generate two points only — top and bottom of chart
+    data.push({ x: Y_clamped, y: R_MIN });
+    data.push({ x: Y_clamped, y: R_MAX });
+
   } else if (capitalMobility === 'imperfect') {
+    // BP positively sloped
     const add = X_total + real_v * real_e + real_K0;
-    for (let Y = 0; Y <= 25000; Y += 250) {
+    for (let Y = Y_MIN; Y <= Y_MAX; Y += 250) {
       const r = real_rstar + (real_m * Y - add) / real_f;
-      if (isFinite(r) && r >= -20 && r <= 60) {
+      if (isFinite(r) && r >= R_MIN && r <= R_MAX) {
         data.push({ x: Y, y: r });
       }
     }
+
   } else {
-    for (let Y = 0; Y <= 25000; Y += 500) {
-      data.push({ x: Y, y: real_rstar });
-    }
+    // BP horizontal at i = i* (perfect mobility)
+    // Two points spanning full X range
+    const r = Math.max(R_MIN, Math.min(R_MAX, real_rstar));
+    data.push({ x: Y_MIN, y: r });
+    data.push({ x: Y_MAX, y: r });
   }
+
   return data;
 }
 

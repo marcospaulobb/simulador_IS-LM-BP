@@ -410,8 +410,8 @@ export function initChart(canvasId) {
             },
             color: '#1f2937'
           },
-          min: 1000,
-          max: 4500,
+          min: 0,
+          max: 14000,
           ticks: {
             font: {
               family: 'Inter, sans-serif',
@@ -443,7 +443,7 @@ export function initChart(canvasId) {
             color: '#1f2937'
           },
           min: 0,
-          max: 15,
+          max: 40,
           ticks: {
             font: {
               family: 'Inter, sans-serif',
@@ -544,81 +544,15 @@ function arraysEqual(arr1, arr2) {
 }
 
 /**
- * Dynamically adjust chart axes based on data
- * Centraliza o equilíbrio no gráfico
+ * Apply fixed static axes so IS/LM/BP curve movements are immediately visible.
+ * X axis (Renda Y): 0 → 14000
+ * Y axis (Juros i): 0 → 40
  */
 function adjustAxes(chart, dataIS, dataLM, dataBP, eqData) {
-  const eq = eqData;
-  
-  if (!eq || !eq.Y || !eq.r) {
-    chart.options.scales.x.min = 0;
-    chart.options.scales.x.max = 12000;
-    chart.options.scales.y.min = 0;
-    chart.options.scales.y.max = 50;
-    return;
-  }
-  
-  const eqY = eq.Y;
-  const eqR = eq.r;
-  
-  // 1. Centralizar Eixo X (Renda Y)
-  // Usamos um range mínimo de 6000 para evitar zoom excessivo
-  const minRangeY = 8000;
-  let minY, maxY;
-  
-  if (eqY < minRangeY / 2) {
-    // Equilíbrio muito baixo: fixar min em 0 e dobrar eq para centralizar
-    minY = 0;
-    maxY = Math.max(minRangeY, eqY * 2);
-  } else {
-    // Equilíbrio alto: centralizar com range fixo
-    const halfRange = Math.max(minRangeY / 2, eqY * 0.4); // 40% de margem ou min
-    minY = eqY - halfRange;
-    maxY = eqY + halfRange;
-  }
-  
-  // Ajuste especial se houver BP vertical (garantir que BP apareça)
-  if (dataBP && dataBP.length > 0) {
-    const bpX = dataBP[0].x;
-    const bpIsVertical = dataBP.every(point => Math.abs(point.x - bpX) < 1);
-    if (bpIsVertical) {
-      if (bpX < minY) minY = Math.max(0, bpX - 500);
-      if (bpX > maxY) maxY = bpX + 500;
-      
-      // Re-centralizar se BP for incluída e desbalancear muito
-      const newCenter = (minY + maxY) / 2;
-      // Se o equilíbrio estiver muito longe do novo centro, expandimos o outro lado
-      if (Math.abs(eqY - newCenter) > (maxY - minY) * 0.1) {
-         const dist = Math.abs(eqY - minY);
-         maxY = eqY + dist;
-      }
-    }
-  }
-
-  // 2. Centralizar Eixo Y (Juros i)
-  const minRangeR = 20; 
-  let minR, maxR;
-  
-  if (eqR < minRangeR / 2) {
-    minR = 0;
-    maxR = Math.max(minRangeR, eqR * 2);
-  } else {
-    const halfRange = Math.max(minRangeR / 2, eqR * 0.5);
-    minR = Math.max(0, eqR - halfRange);
-    maxR = eqR + halfRange;
-    
-    // Se minR for 0 por causa do Math.max, ajustar maxR para centralizar
-    if (minR === 0) {
-      maxR = eqR * 2;
-    }
-  }
-
-  // Aplicar com arredondamento estético
-  chart.options.scales.x.min = Math.floor(minY / 100) * 100;
-  chart.options.scales.x.max = Math.ceil(maxY / 100) * 100;
-  chart.options.scales.y.min = Math.floor(minR);
-  chart.options.scales.y.max = Math.ceil(maxR);
-  
-  console.log(`Centering Axis: eq(${eqY.toFixed(0)}, ${eqR.toFixed(1)}%) -> X[${chart.options.scales.x.min}, ${chart.options.scales.x.max}] Y[${chart.options.scales.y.min}, ${chart.options.scales.y.max}]`);
+  // Fixed reference frame — never rescales
+  chart.options.scales.x.min = 0;
+  chart.options.scales.x.max = 14000;
+  chart.options.scales.y.min = 0;
+  chart.options.scales.y.max = 40;
 }
 

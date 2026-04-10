@@ -6,7 +6,7 @@
 export class StateManager {
   constructor() {
     this.state = {
-      isOpenEconomy: false,
+      isOpenEconomy: true,
       isFloatingRate: true,
       capitalMobility: 'perfect', // 'perfect', 'imperfect', 'zero', 'closed'
       params: {

@@ -1,621 +1,771 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Simulador IS-LM & Mundell-Fleming | Mackenzie</title>
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- KaTeX -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
-    <link rel="stylesheet" href="/src/style.css">
-  </head>
-  <body class="bg-gray-50 text-gray-900 font-sans antialiased h-screen flex flex-col overflow-hidden">
-    <!-- Header -->
-    <header class="bg-white border-b border-gray-200 shadow-sm z-50 flex-none">
-      <div class="w-full px-2 py-3 flex items-center justify-between">
-        <div class="flex items-center space-x-2">
-          <img src="/mackenzie-logo-1.png" alt="Mackenzie Logo" class="h-10 object-contain">
-          <div class="flex flex-col">
-            <h1 class="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-mackenzie-green to-teal-700 whitespace-nowrap leading-tight">
-              Simulador IS-LM & Mundell-Fleming
-            </h1>
-            <p class="text-xs text-gray-600 leading-tight">
-              Desenvolvido por Marcos Paulo Soares | Professora: Waleska Andreza
-            </p>
-          </div>
-        </div>
-        <div class="flex items-center space-x-6">
-          <div class="flex flex-col items-end">
-            <!-- Toggle Fechada/Aberta -->
-            <label class="flex items-center cursor-pointer mb-2">
-              <div class="relative">
-                <input type="checkbox" id="model-toggle" class="sr-only">
-                <div class="block bg-gray-200 w-14 h-8 rounded-full transition-colors duration-300 peer-checked:bg-mackenzie-green toggle-bg"></div>
-                <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform duration-300"></div>
-              </div>
-              <div class="ml-3 text-sm font-semibold text-gray-700" id="model-label">
-                Economia Fechada (IS-LM)
-              </div>
-            </label>
-            <!-- Toggle Fixo/Flutuante (Hidden initial) -->
-            <label class="flex items-center cursor-pointer hidden transition-opacity duration-300" id="exchange-toggle-container">
-              <div class="relative">
-                <input type="checkbox" id="exchange-toggle" class="sr-only" checked>
-                <div class="block bg-gray-200 w-10 h-6 rounded-full transition-colors duration-300 peer-checked:bg-mackenzie-green toggle-bg-sm"></div>
-                <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-300"></div>
-              </div>
-              <div class="ml-2 text-xs font-semibold text-gray-600" id="exchange-label">
-                Câmbio Flutuante
-              </div>
-            </label>
-          </div>
-          
-          <button id="btn-scenarios" class="px-3 py-2 border border-gray-300 rounded text-sm text-gray-600 hover:bg-gray-100 transition" title="Cenários (S)">📚 Cenários</button>
-          <button id="btn-history" class="px-3 py-2 border border-gray-300 rounded text-sm text-gray-600 hover:bg-gray-100 transition" title="Histórico (H)">📊 Histórico</button>
-          <button id="btn-capture" class="px-3 py-2 border border-green-300 bg-green-50 rounded text-sm text-green-700 hover:bg-green-100 transition" title="Capturar Referência (C)">📍 Capturar</button>
-          <button id="btn-help" class="px-3 py-2 border border-gray-300 rounded text-sm text-gray-600 hover:bg-gray-100 transition" title="Ajuda (?)">❓</button>
-          <button id="btn-reset" class="px-3 py-2 border border-gray-300 rounded text-sm text-gray-600 hover:bg-gray-100 transition" title="Resetar (R)">🔄 Resetar</button>
-          <button id="btn-export" class="px-4 py-2 bg-mackenzie-green text-white rounded text-sm hover:bg-green-700 transition">📸 Exportar</button>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulador IS-LM & Mundell-Fleming | Mackenzie</title>
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- KaTeX -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+
+<body class="bg-gray-50 text-gray-900 font-sans antialiased h-screen flex flex-col overflow-hidden">
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200 shadow-sm z-50 flex-none">
+    <div class="w-full px-2 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <img src="/mackenzie-logo-1.png" alt="Mackenzie Logo" class="h-10 object-contain">
+        <div class="flex flex-col">
+          <h1
+            class="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-mackenzie-green to-teal-700 whitespace-nowrap leading-tight">
+            Simulador IS-LM & Mundell-Fleming
+          </h1>
+          <p class="text-xs text-gray-600 leading-tight">
+            Desenvolvido por Marcos Paulo Soares | Professora: Waleska Andreza
+          </p>
         </div>
       </div>
-    </header>
+      <!-- MODELO: sempre visível -->
+      <div class="flex items-center space-x-1 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
+        <span class="text-[10px] font-bold text-blue-700 uppercase tracking-wider mr-2">Modelo:</span>
+        <label class="ctrl-radio-label">
+          <input type="radio" name="modelType" value="fechado" id="model-fechado" class="ctrl-radio">
+          <span class="ctrl-radio-text">IS-LM<br><small>Fechado</small></span>
+        </label>
+        <label class="ctrl-radio-label">
+          <input type="radio" name="modelType" value="islmbp" id="model-islmbp" class="ctrl-radio" checked>
+          <span class="ctrl-radio-text">IS-LM-BP<br><small>Aberta</small></span>
+        </label>
+      </div>
 
-    <!-- Main Content -->
-    <main class="flex-1 flex flex-col lg:flex-row overflow-hidden gap-0">
-      <!-- Left Column: Graph -->
-      <section class="flex-1 flex flex-col min-h-0 bg-gradient-to-br from-gray-50 to-gray-100" id="graph-container">
-        <!-- Graph Area -->
-        <div class="flex-1 p-4 flex items-center justify-center">
-          <div class="w-full h-full max-w-6xl max-h-[500px] bg-white rounded-xl shadow-lg p-4 border border-gray-200">
-            <canvas id="macroChart"></canvas>
-          </div>
+      <!-- MOBILIDADE: só ativo quando IS-LM-BP -->
+      <div
+        class="flex items-center space-x-1 bg-green-50 px-3 py-2 rounded-lg border border-green-200 transition-opacity duration-200"
+        id="mob-group">
+        <span class="text-[10px] font-bold text-green-700 uppercase tracking-wider mr-2">Mobilidade:</span>
+        <label class="ctrl-radio-label">
+          <input type="radio" name="capitalMobility" value="perfect" id="mob-perfect" class="ctrl-radio" checked>
+          <span class="ctrl-radio-text">Perfeita<br><small>BP horizontal</small></span>
+        </label>
+        <label class="ctrl-radio-label">
+          <input type="radio" name="capitalMobility" value="imperfect" id="mob-imperfect" class="ctrl-radio">
+          <span class="ctrl-radio-text">Imperfeita<br><small>BP inclinada</small></span>
+        </label>
+        <label class="ctrl-radio-label">
+          <input type="radio" name="capitalMobility" value="zero" id="mob-zero" class="ctrl-radio">
+          <span class="ctrl-radio-text">Sem<br><small>Mobilidade</small></span>
+        </label>
+      </div>
+
+      <!-- CÂMBIO: só ativo quando IS-LM-BP -->
+      <div
+        class="flex items-center space-x-1 bg-purple-50 px-3 py-2 rounded-lg border border-purple-200 transition-opacity duration-200"
+        id="exchange-group">
+        <span class="text-[10px] font-bold text-purple-700 uppercase tracking-wider mr-2">Câmbio:</span>
+        <label class="ctrl-radio-label">
+          <input type="radio" name="exchangeRegime" value="fixed" id="exc-fixed" class="ctrl-radio">
+          <span class="ctrl-radio-text">Fixo</span>
+        </label>
+        <label class="ctrl-radio-label">
+          <input type="radio" name="exchangeRegime" value="floating" id="exc-floating" class="ctrl-radio" checked>
+          <span class="ctrl-radio-text">Flutuante</span>
+        </label>
+      </div>
+
+      <button id="btn-scenarios"
+        class="px-3 py-2 border border-gray-300 rounded text-sm text-gray-600 hover:bg-gray-100 transition"
+        title="Cenários (S)">📚 Cenários</button>
+      <button id="btn-help"
+        class="px-3 py-2 border border-gray-300 rounded text-sm text-gray-600 hover:bg-gray-100 transition"
+        title="Ajuda (?)">❓</button>
+      <button id="btn-reset"
+        class="px-3 py-2 border border-gray-300 rounded text-sm text-gray-600 hover:bg-gray-100 transition"
+        title="Resetar (R)">🔄 Resetar</button>
+      <button id="btn-export"
+        class="px-4 py-2 bg-mackenzie-green text-white rounded text-sm hover:bg-green-700 transition">📸
+        Exportar</button>
+    </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 flex flex-col lg:flex-row overflow-hidden gap-0">
+    <!-- Left Column: Graph -->
+    <section class="flex-1 flex flex-col min-h-0 bg-gradient-to-br from-gray-50 to-gray-100" id="graph-container">
+      <!-- Graph Area -->
+      <div class="flex-1 p-4 flex items-center justify-center">
+        <div class="w-full h-full max-w-6xl max-h-[350px] bg-white rounded-xl shadow-lg p-4 border border-gray-200">
+          <canvas id="macroChart"></canvas>
         </div>
-        
-        <!-- Explanation areas - Side by Side -->
-        <div class="mx-4 mb-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <!-- Policy Variables Box -->
-          <div class="p-4 bg-white border-l-4 border-mackenzie-green rounded-lg shadow-md max-h-[300px] overflow-y-auto">
-            <div class="flex items-start gap-2">
-              <div class="flex-shrink-0 w-7 h-7 bg-mackenzie-green rounded-full flex items-center justify-center text-white font-bold text-xs">
-                📊
-              </div>
-              <div class="flex-1">
-                <h3 class="font-bold text-mackenzie-green mb-1 text-sm">Análise Econômica - Variáveis de Política</h3>
-                <p id="explanation-text" class="text-xs text-gray-700 leading-relaxed">
-                  Bem-vindo ao simulador. Ajuste os controles à direita para ver como as políticas afetam o equilíbrio da economia.
-                </p>
-              </div>
+      </div>
+
+      <!-- Explanation areas - Side by Side -->
+      <div class="mx-4 mb-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- Policy Variables Box -->
+        <div class="p-4 bg-white border-l-4 border-mackenzie-green rounded-lg shadow-md max-h-[300px] overflow-y-auto">
+          <div class="flex items-start gap-2">
+            <div
+              class="flex-shrink-0 w-7 h-7 bg-mackenzie-green rounded-full flex items-center justify-center text-white font-bold text-xs">
+              📊
+            </div>
+            <div class="flex-1">
+              <h3 class="font-bold text-mackenzie-green mb-1 text-sm">Análise Econômica - Variáveis de Política</h3>
+              <p id="explanation-text" class="text-xs text-gray-700 leading-relaxed">
+                Bem-vindo ao simulador. Ajuste os controles à direita para ver como as políticas afetam o equilíbrio da
+                economia.
+              </p>
             </div>
           </div>
+        </div>
 
-          <!-- Structural Parameters Box -->
-          <div class="p-4 bg-gradient-to-br from-gray-50 to-gray-100 border-l-4 border-gray-600 rounded-lg shadow-md max-h-[300px] overflow-y-auto">
-            <div class="flex items-start gap-2">
-              <div class="flex-shrink-0 w-7 h-7 bg-gray-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                ⚙️
-              </div>
-              <div class="flex-1">
-                <h3 class="font-bold text-gray-700 mb-1 text-sm">Parâmetros Estruturais</h3>
-                <p id="structural-text" class="text-xs text-gray-700 leading-relaxed">
-                  Os parâmetros estruturais (c, b, k, h) determinam a inclinação das curvas IS e LM, afetando a eficácia das políticas econômicas.
-                </p>
-              </div>
+        <!-- Structural Parameters Box -->
+        <div
+          class="p-4 bg-gradient-to-br from-gray-50 to-gray-100 border-l-4 border-gray-600 rounded-lg shadow-md max-h-[300px] overflow-y-auto">
+          <div class="flex items-start gap-2">
+            <div
+              class="flex-shrink-0 w-7 h-7 bg-gray-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
+              ⚙️
+            </div>
+            <div class="flex-1">
+              <h3 class="font-bold text-gray-700 mb-1 text-sm">Parâmetros Estruturais</h3>
+              <p id="structural-text" class="text-xs text-gray-700 leading-relaxed">
+                Os parâmetros estruturais (c, b, k, h) determinam a inclinação das curvas IS e LM, afetando a eficácia
+                das políticas econômicas.
+              </p>
             </div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- Right Column: Controls -->
-      <section class="w-full lg:w-[420px] bg-white border-l border-gray-200 flex flex-col overflow-hidden shadow-2xl z-40">
-        <!-- Header do Painel -->
-        <div class="bg-gradient-to-r from-mackenzie-green to-teal-700 text-white p-4 flex-none">
-          <h2 class="text-lg font-bold">Painel de Controle</h2>
-          <p class="text-xs opacity-90 mt-1">Ajuste as variáveis e observe os efeitos</p>
+    <!-- Right Column: Controls -->
+    <section
+      class="w-full lg:w-[480px] bg-white border-l border-gray-200 flex flex-col overflow-hidden shadow-2xl z-40">
+      <!-- Header do Painel -->
+      <div class="bg-gradient-to-r from-mackenzie-green to-teal-700 text-white p-3 flex-none">
+        <h2 class="text-sm font-bold border-b border-green-600 pb-2 mb-2">Painel de Controle</h2>
+
+        <div class="flex space-x-1">
+          <button
+            class="flex-1 px-1 py-1.5 text-xs bg-white text-teal-800 rounded font-bold shadow transition tab-controls"
+            id="tabbtn-policy" onclick="openTab('policy')">Políticas</button>
+          <button
+            class="flex-1 px-1 py-1.5 text-xs bg-teal-800 text-white rounded hover:bg-teal-600 font-bold transition tab-controls"
+            id="tabbtn-auto" onclick="openTab('auto')">Estruturais</button>
+          <button
+            class="flex-1 px-1 py-1.5 text-xs bg-teal-800 text-white rounded hover:bg-teal-600 font-bold transition tab-controls open-eco-group hidden"
+            id="tabbtn-open" onclick="openTab('open')">Ec. Aberta</button>
         </div>
-        
-        <!-- Scrollable Content -->
-        <div class="flex-1 overflow-y-auto p-5 space-y-5">
-          
+        <script>
+          function openTab(tabName) {
+            // Hide all
+            document.getElementById('pane-policy').classList.add('hidden');
+            document.getElementById('pane-auto').classList.add('hidden');
+            document.getElementById('pane-open').classList.add('hidden');
+
+            // Reset buttons
+            document.querySelectorAll('.tab-controls').forEach(btn => {
+              btn.classList.remove('bg-white', 'text-teal-800', 'shadow');
+              btn.classList.add('bg-teal-800', 'text-white', 'hover:bg-teal-600');
+            });
+
+            // Show active
+            document.getElementById('pane-' + tabName).classList.remove('hidden');
+            let activeBtn = document.getElementById('tabbtn-' + tabName);
+            activeBtn.classList.remove('bg-teal-800', 'text-white', 'hover:bg-teal-600');
+            activeBtn.classList.add('bg-white', 'text-teal-800', 'shadow');
+          }
+        </script>
+      </div>
+
+      <!-- Scrollable Content -->
+      <div class="flex-1 overflow-y-auto p-3 bg-gray-50">
+
+        <!-- PANE 1: POLÍTICA -->
+        <div id="pane-policy" class="space-y-4">
           <!-- Shock Buttons -->
-          <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <h3 class="text-xs font-bold text-gray-600 uppercase tracking-wide mb-3 flex items-center gap-2">
-              <span class="w-5 h-5 bg-mackenzie-green rounded text-white flex items-center justify-center text-[10px]">⚡</span>
-              Choques Rápidos
-            </h3>
-            <div class="grid grid-cols-2 gap-2">
-              <button class="shock-btn bg-blue-50 hover:bg-blue-100 text-blue-700 p-2.5 rounded-lg text-xs font-semibold border-2 border-blue-200 transition-all hover:scale-105 hover:shadow-md" data-shock="G" data-dir="up">↑ Gasto Público</button>
-              <button class="shock-btn bg-blue-50 hover:bg-blue-100 text-blue-700 p-2.5 rounded-lg text-xs font-semibold border-2 border-blue-200 transition-all hover:scale-105 hover:shadow-md" data-shock="G" data-dir="down">↓ Gasto Público</button>
-              <button class="shock-btn bg-green-50 hover:bg-green-100 text-green-700 p-2.5 rounded-lg text-xs font-semibold border-2 border-green-200 transition-all hover:scale-105 hover:shadow-md" data-shock="M" data-dir="up">↑ Oferta Moeda</button>
-              <button class="shock-btn bg-green-50 hover:bg-green-100 text-green-700 p-2.5 rounded-lg text-xs font-semibold border-2 border-green-200 transition-all hover:scale-105 hover:shadow-md" data-shock="M" data-dir="down">↓ Oferta Moeda</button>
-              <!-- Additional for open economy -->
-              <button class="shock-btn open-eco-btn hidden bg-purple-50 hover:bg-purple-100 text-purple-700 p-2.5 rounded-lg text-xs font-semibold border-2 border-purple-200 transition-all hover:scale-105 hover:shadow-md" data-shock="e" data-dir="up">↑ Desvaloriza Câmbio</button>
-              <button class="shock-btn open-eco-btn hidden bg-purple-50 hover:bg-purple-100 text-purple-700 p-2.5 rounded-lg text-xs font-semibold border-2 border-purple-200 transition-all hover:scale-105 hover:shadow-md" data-shock="e" data-dir="down">↓ Valoriza Câmbio</button>
+          <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+            <h3 class="text-[10px] font-bold text-gray-600 uppercase tracking-wide mb-2">⚡ Choques Rápidos</h3>
+            <div class="grid grid-cols-2 gap-1.5">
+              <button
+                class="shock-btn bg-blue-50 hover:bg-blue-100 text-blue-700 p-1.5 rounded text-xs font-semibold border border-blue-200"
+                data-shock="G" data-dir="up">↑ Gasto Público</button>
+              <button
+                class="shock-btn bg-blue-50 hover:bg-blue-100 text-blue-700 p-1.5 rounded text-xs font-semibold border border-blue-200"
+                data-shock="G" data-dir="down">↓ Gasto Público</button>
+              <button
+                class="shock-btn bg-green-50 hover:bg-green-100 text-green-700 p-1.5 rounded text-xs font-semibold border border-green-200"
+                data-shock="M" data-dir="up">↑ Oferta Moeda</button>
+              <button
+                class="shock-btn bg-green-50 hover:bg-green-100 text-green-700 p-1.5 rounded text-xs font-semibold border border-green-200"
+                data-shock="M" data-dir="down">↓ Oferta Moeda</button>
+              <button
+                class="shock-btn open-eco-btn hidden bg-purple-50 hover:bg-purple-100 text-purple-700 p-1.5 rounded text-xs font-semibold border border-purple-200"
+                data-shock="e" data-dir="down">↓ Valoriza Câmbio</button>
+              <button
+                class="shock-btn open-eco-btn hidden bg-purple-50 hover:bg-purple-100 text-purple-700 p-1.5 rounded text-xs font-semibold border border-purple-200"
+                data-shock="e" data-dir="up">↑ Desvaloriza Câmbio</button>
             </div>
           </div>
 
           <!-- Policy Sliders -->
-          <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
-            <h3 class="text-xs font-bold text-blue-800 uppercase tracking-wide mb-4 flex items-center gap-2">
-              <span class="w-5 h-5 bg-blue-600 rounded text-white flex items-center justify-center text-[10px]">📊</span>
-              Variáveis de Política
-            </h3>
-            
-            <div class="space-y-4">
+          <div class="bg-white rounded-lg p-3 border border-blue-200 shadow-sm relative">
+            <div class="absolute left-0 top-0 w-1 h-full bg-blue-500"></div>
+            <h3 class="text-[10px] font-bold text-blue-800 uppercase tracking-wide mb-3 pl-2">Variáveis de Política</h3>
+            <div class="space-y-3 pl-2">
               <div class="control-group-enhanced">
-                <div class="flex justify-between mb-2">
-                  <label class="text-sm font-semibold text-gray-800">Gasto Público (G)</label>
-                  <input type="number" id="val-G" min="1000" max="3500" step="100" value="2200" class="text-sm font-bold text-mackenzie-green val-input px-2 py-0.5 bg-white rounded border border-gray-300 w-20 text-right focus:outline-none focus:ring-2 focus:ring-mackenzie-green">
+                <div class="flex justify-between mb-1">
+                  <label class="text-xs font-semibold">Gasto Público (G)</label>
+                  <input type="number" id="val-G" min="1000" max="3500" step="100" value="2200"
+                    class="text-xs font-bold text-mackenzie-green val-input w-16 text-right border p-0.5">
                 </div>
-                <input type="range" id="slider-G" min="1000" max="3500" step="100" value="2200" class="w-full h-2.5 bg-white rounded-lg appearance-none cursor-pointer accent-mackenzie-green slider-enhanced">
+                <input type="range" id="slider-G" min="1000" max="3500" step="100" value="2200"
+                  class="w-full h-1.5 slider-enhanced">
               </div>
-
               <div class="control-group-enhanced">
-                <div class="flex justify-between mb-2">
-                  <label class="text-sm font-semibold text-gray-800">Tributação (T)</label>
-                  <input type="number" id="val-T" min="2000" max="5000" step="100" value="3500" class="text-sm font-bold text-mackenzie-green val-input px-2 py-0.5 bg-white rounded border border-gray-300 w-20 text-right focus:outline-none focus:ring-2 focus:ring-mackenzie-green">
+                <div class="flex justify-between mb-1">
+                  <label class="text-xs font-semibold">Tributação (T)</label>
+                  <input type="number" id="val-T" min="2000" max="5000" step="100" value="3500"
+                    class="text-xs font-bold text-mackenzie-green val-input w-16 text-right border p-0.5">
                 </div>
-                <input type="range" id="slider-T" min="2000" max="5000" step="100" value="3500" class="w-full h-2.5 bg-white rounded-lg appearance-none cursor-pointer accent-mackenzie-green slider-enhanced">
+                <input type="range" id="slider-T" min="2000" max="5000" step="100" value="3500"
+                  class="w-full h-1.5 slider-enhanced">
               </div>
-
               <div class="control-group-enhanced">
-                <div class="flex justify-between mb-2">
-                  <label class="text-sm font-semibold text-gray-800">Oferta Real de Moeda (M/P)</label>
-                  <input type="number" id="val-M" min="800" max="3000" step="100" value="1800" class="text-sm font-bold text-mackenzie-green val-input px-2 py-0.5 bg-white rounded border border-gray-300 w-20 text-right focus:outline-none focus:ring-2 focus:ring-mackenzie-green">
+                <div class="flex justify-between mb-1">
+                  <label class="text-xs font-semibold">Oferta de Moeda (M/P)</label>
+                  <input type="number" id="val-M" min="800" max="3000" step="100" value="1800"
+                    class="text-xs font-bold text-mackenzie-green val-input w-16 text-right border p-0.5">
                 </div>
-                <input type="range" id="slider-M" min="800" max="3000" step="100" value="1800" class="w-full h-2.5 bg-white rounded-lg appearance-none cursor-pointer accent-mackenzie-green slider-enhanced">
+                <input type="range" id="slider-M" min="800" max="3000" step="100" value="1800"
+                  class="w-full h-1.5 slider-enhanced">
               </div>
-
-              <!-- Open Economy controls -->
               <div class="control-group-enhanced open-eco-group hidden">
-                <div class="flex justify-between mb-2">
-                  <label class="text-sm font-semibold text-gray-800">Taxa de Câmbio (e)</label>
-                  <input type="number" id="val-e" min="4.0" max="6.0" step="0.01" value="5.17" class="text-sm font-bold text-purple-600 val-input px-2 py-0.5 bg-white rounded border border-gray-300 w-20 text-right focus:outline-none focus:ring-2 focus:ring-purple-600">
+                <div class="flex justify-between mb-1">
+                  <label class="text-xs font-semibold">Taxa de Câmbio (e)</label>
+                  <input type="number" id="val-e" min="4.0" max="6.0" step="0.01" value="5.17"
+                    class="text-xs font-bold text-purple-600 val-input w-16 text-right border p-0.5">
                 </div>
-                <input type="range" id="slider-e" min="4.0" max="6.0" step="0.01" value="5.17" class="w-full h-2.5 bg-white rounded-lg appearance-none cursor-pointer accent-purple-600 slider-enhanced">
-                <p class="text-[10px] text-gray-600 mt-1.5 italic" id="hint-e">Desativado no Câmbio Flutuante</p>
+                <input type="range" id="slider-e" min="4.0" max="6.0" step="0.01" value="5.17"
+                  class="w-full h-1.5 slider-enhanced accent-purple-600">
               </div>
-              
               <div class="control-group-enhanced open-eco-group hidden">
-                <div class="flex justify-between mb-2">
-                  <label class="text-sm font-semibold text-gray-800">Tx. Juros Internacional (r*)</label>
-                  <input type="number" id="val-rstar" min="1.0" max="12.0" step="0.25" value="5.25" class="text-sm font-bold text-purple-600 val-input px-2 py-0.5 bg-white rounded border border-gray-300 w-20 text-right focus:outline-none focus:ring-2 focus:ring-purple-600">
+                <div class="flex justify-between mb-1">
+                  <label class="text-xs font-semibold">Tx. Juros Int. (r*)</label>
+                  <input type="number" id="val-rstar" min="1.0" max="12.0" step="0.25" value="5.25"
+                    class="text-xs font-bold text-purple-600 val-input w-16 text-right border p-0.5">
                 </div>
-                <input type="range" id="slider-rstar" min="1.0" max="12.0" step="0.25" value="5.25" class="w-full h-2.5 bg-white rounded-lg appearance-none cursor-pointer accent-purple-600 slider-enhanced">
+                <input type="range" id="slider-rstar" min="1.0" max="12.0" step="0.25" value="5.25"
+                  class="w-full h-1.5 slider-enhanced accent-purple-600">
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Parameters / Sensitivities -->
-          <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-300">
-             <h3 class="text-xs font-bold text-gray-700 uppercase tracking-wide mb-4 flex items-center gap-2">
-               <span class="w-5 h-5 bg-gray-600 rounded text-white flex items-center justify-center text-[10px]">⚙️</span>
-               Parâmetros Estruturais
-             </h3>
-             <div class="space-y-3">
-               
-              <div class="control-group-enhanced-small">
-                <div class="flex justify-between mb-1.5">
-                  <label class="text-xs font-medium text-gray-700" title="Propensão Marginal a Consumir">PMgC (c)</label>
-                  <input type="number" id="val-c" min="0.1" max="0.9" step="0.05" value="0.6" class="text-xs font-bold text-gray-700 val-input px-1.5 py-0.5 bg-white rounded border border-gray-300 w-16 text-right text-[11px] focus:outline-none focus:ring-2 focus:ring-gray-600">
-                </div>
-                <input type="range" id="slider-c" min="0.1" max="0.9" step="0.05" value="0.6" class="w-full h-1.5 bg-white rounded-lg appearance-none cursor-pointer accent-gray-600">
+        <!-- PANE 2: ESTRUTURAIS -->
+        <div id="pane-auto" class="space-y-4 hidden">
+          <!-- Autônomos -->
+          <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm relative">
+            <div class="absolute left-0 top-0 w-1 h-full bg-blue-500"></div>
+            <h3 class="text-[10px] font-bold text-blue-800 uppercase tracking-wide mb-2 pl-2">Componentes Autônomos</h3>
+            <div class="grid grid-cols-2 gap-2 pl-2">
+              <div>
+                <label class="text-[10px] font-semibold text-gray-600">C0 (Consumo)</label>
+                <input type="number" id="param-C0" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
+                  value="1500" step="100">
               </div>
-
-              <div class="control-group-enhanced-small">
-                <div class="flex justify-between mb-1.5">
-                  <label class="text-xs font-medium text-gray-700" title="Sensibilidade do Investimento aos Juros">Sen. Inv (b)</label>
-                  <input type="number" id="val-b" min="10" max="100" step="5" value="50" class="text-xs font-bold text-gray-700 val-input px-1.5 py-0.5 bg-white rounded border border-gray-300 w-16 text-right text-[11px] focus:outline-none focus:ring-2 focus:ring-gray-600">
-                </div>
-                <input type="range" id="slider-b" min="10" max="100" step="5" value="50" class="w-full h-1.5 bg-white rounded-lg appearance-none cursor-pointer accent-gray-600">
+              <div>
+                <label class="text-[10px] font-semibold text-gray-600">I0 (Investimento)</label>
+                <input type="number" id="param-I0" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
+                  value="2000" step="100">
               </div>
-
-              <div class="control-group-enhanced-small">
-                <div class="flex justify-between mb-1.5">
-                  <label class="text-xs font-medium text-gray-700" title="Sensibilidade da Moeda à Renda">Sen. Moeda Y (k)</label>
-                  <input type="number" id="val-k" min="0.1" max="1.0" step="0.05" value="0.5" class="text-xs font-bold text-gray-700 val-input px-1.5 py-0.5 bg-white rounded border border-gray-300 w-16 text-right text-[11px] focus:outline-none focus:ring-2 focus:ring-gray-600">
-                </div>
-                <input type="range" id="slider-k" min="0.1" max="1.0" step="0.05" value="0.5" class="w-full h-1.5 bg-white rounded-lg appearance-none cursor-pointer accent-gray-600">
+              <div class="open-eco-group hidden">
+                <label class="text-[10px] font-semibold text-gray-600">X0 (Exportações)</label>
+                <input type="number" id="param-X0" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
+                  value="1500" step="100">
               </div>
-
-              <div class="control-group-enhanced-small">
-                <div class="flex justify-between mb-1.5">
-                  <label class="text-xs font-medium text-gray-700" title="Sensibilidade da Moeda aos Juros">Sen. Moeda r (h)</label>
-                  <input type="number" id="val-h" min="10" max="150" step="5" value="60" class="text-xs font-bold text-gray-700 val-input px-1.5 py-0.5 bg-white rounded border border-gray-300 w-16 text-right text-[11px] focus:outline-none focus:ring-2 focus:ring-gray-600">
-                </div>
-                <input type="range" id="slider-h" min="10" max="150" step="5" value="60" class="w-full h-1.5 bg-white rounded-lg appearance-none cursor-pointer accent-gray-600">
+              <div class="open-eco-group hidden">
+                <label class="text-[10px] font-semibold text-gray-600">M0 (Importações)</label>
+                <input type="number" id="param-M0" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
+                  value="1300" step="100">
               </div>
-
-             </div>
+              <div>
+                <label class="text-[10px] font-semibold text-gray-600">L0 (Dem. Moeda)</label>
+                <input type="number" id="param-L0" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
+                  value="0" step="10">
+              </div>
+              <div class="open-eco-group hidden">
+                <label class="text-[10px] font-semibold text-gray-600">K0 (Fluxo Capital)</label>
+                <input type="number" id="param-K0" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
+                  value="0" step="10">
+              </div>
+            </div>
+            <button
+              class="mt-2 text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded w-full font-bold uppercase hover:bg-blue-200"
+              onclick="document.getElementById('btn-apply-advanced').click()">Aplicar Autônomos</button>
           </div>
 
-          <!-- Equations Button -->
-          <div class="pt-2">
-             <button id="btn-equations" class="w-full px-4 py-3 bg-gradient-to-r from-mackenzie-green to-teal-700 text-white rounded-lg text-sm hover:from-green-700 hover:to-teal-800 transition-all font-semibold shadow-md hover:shadow-lg transform hover:scale-[1.02]">
-               📐 Ver Equações do Modelo
-             </button>
-          </div>
-
-          <!-- Advanced Parameters Button -->
-          <div class="pt-2">
-             <button id="btn-advanced" class="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg text-sm hover:from-purple-700 hover:to-purple-800 transition-all font-semibold shadow-md hover:shadow-lg transform hover:scale-[1.02]">
-               ⚙️ Parâmetros Avançados
-             </button>
+          <!-- Estruturais -->
+          <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm relative">
+            <div class="absolute left-0 top-0 w-1 h-full bg-gray-600"></div>
+            <h3 class="text-[10px] font-bold text-gray-700 uppercase tracking-wide mb-2 pl-2">Parâmetros Estruturais
+            </h3>
+            <div class="space-y-2 pl-2">
+              <div class="control-group-enhanced-small">
+                <div class="flex justify-between mb-1">
+                  <label class="text-[11px] font-medium text-gray-700">PMgC (c)</label>
+                  <input type="number" id="val-c" min="0.1" max="0.9" step="0.05" value="0.6"
+                    class="text-xs font-bold border rounded w-12 text-right">
+                </div>
+                <input type="range" id="slider-c" min="0.1" max="0.9" step="0.05" value="0.6"
+                  class="w-full h-1 bg-gray-200 accent-gray-600">
+              </div>
+              <div class="control-group-enhanced-small">
+                <div class="flex justify-between mb-1">
+                  <label class="text-[11px] font-medium text-gray-700">Sen. Inv (b)</label>
+                  <input type="number" id="val-b" min="10" max="100" step="5" value="50"
+                    class="text-xs font-bold border rounded w-12 text-right">
+                </div>
+                <input type="range" id="slider-b" min="10" max="100" step="5" value="50"
+                  class="w-full h-1 bg-gray-200 accent-gray-600">
+              </div>
+              <div class="control-group-enhanced-small">
+                <div class="flex justify-between mb-1">
+                  <label class="text-[11px] font-medium text-gray-700">Sen. Moeda Y (k)</label>
+                  <input type="number" id="val-k" min="0.1" max="1.0" step="0.05" value="0.5"
+                    class="text-xs font-bold border rounded w-12 text-right">
+                </div>
+                <input type="range" id="slider-k" min="0.1" max="1.0" step="0.05" value="0.5"
+                  class="w-full h-1 bg-gray-200 accent-gray-600">
+              </div>
+              <div class="control-group-enhanced-small">
+                <div class="flex justify-between mb-1">
+                  <label class="text-[11px] font-medium text-gray-700">Sen. Moeda r (h)</label>
+                  <input type="number" id="val-h" min="10" max="150" step="5" value="60"
+                    class="text-xs font-bold border rounded w-12 text-right">
+                </div>
+                <input type="range" id="slider-h" min="10" max="150" step="5" value="60"
+                  class="w-full h-1 bg-gray-200 accent-gray-600">
+              </div>
+            </div>
           </div>
         </div>
-      </section>
-    </main>
 
-    <!-- Modal Equações -->
-    <div id="equations-modal" class="fixed inset-0 z-[100] hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 relative">
-        <button id="btn-close-eq" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <!-- PANE 3: EC ABERTA -->
+        <div id="pane-open" class="space-y-4 hidden">
+          <div class="bg-white rounded-lg p-3 border border-purple-200 shadow-sm relative">
+            <div class="absolute left-0 top-0 w-1 h-full bg-purple-600"></div>
+            <h3 class="text-[10px] font-bold text-purple-800 uppercase tracking-wide mb-2 pl-2">🌍 Parâmetros da
+              Economia Aberta</h3>
+            <div class="grid grid-cols-2 gap-2 pl-2">
+              <div>
+                <label class="text-[10px] font-semibold text-gray-600">x1 (Exp à Renda)</label>
+                <input type="number" id="param-x1" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
+                  value="0.15" step="0.01">
+              </div>
+              <div>
+                <label class="text-[10px] font-semibold text-gray-600">x2 (Exp ao Câmbio)</label>
+                <input type="number" id="param-x2" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
+                  value="300" step="10">
+              </div>
+              <div>
+                <label class="text-[10px] font-semibold text-gray-600">m2 (Imp ao Câmbio)</label>
+                <input type="number" id="param-m2" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
+                  value="200" step="10">
+              </div>
+              <div>
+                <label class="text-[10px] font-semibold text-gray-600">f (Mobilidade Cap.)</label>
+                <input type="number" id="param-f" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
+                  value="100" step="10" disabled>
+              </div>
+              <div>
+                <label class="text-[10px] font-semibold text-gray-600">Y* (Renda Externa)</label>
+                <input type="number" id="param-Ystar" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
+                  value="12000" step="100">
+              </div>
+              <div>
+                <label class="text-[10px] font-semibold text-gray-600">P (Nível de Preços)</label>
+                <input type="number" id="param-P" class="w-full px-1.5 py-1 border rounded text-xs bg-gray-50"
+                  value="1.0" step="0.1">
+              </div>
+            </div>
+            <button
+              class="mt-2 text-[10px] bg-purple-100 text-purple-700 px-2 py-1 rounded w-full font-bold uppercase hover:bg-purple-200"
+              onclick="document.getElementById('btn-apply-advanced').click()">Aplicar Ec Aberta</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Actions -->
+      <div class="bg-white p-3 border-t border-gray-200 grid grid-cols-2 gap-2 flex-none">
+        <button id="btn-equations"
+          class="px-2 py-2 bg-gradient-to-r from-mackenzie-green to-teal-700 text-white rounded text-xs font-bold hover:shadow-md transition">
+          📐 Equações
         </button>
-        <h2 class="text-2xl font-bold mb-4 text-mackenzie-green border-b pb-2">Sistema de Equações</h2>
-        <div class="space-y-6 text-sm text-gray-800" id="math-content">
-          <div>
-             <h3 class="font-bold text-red-700 mb-2">Curva IS (Mercado de Bens)</h3>
-             <div>$Y = C + I + G + NX$</div>
-             <div>$C = C_0 + c(Y - T)$</div>
-             <div>$I = I_0 - b \cdot r$</div>
-             <div>$NX = X_0 - m \cdot Y + v \cdot e$ (Em economia aberta)</div>
+        <button id="btn-load-scenario-expanded"
+          class="px-2 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded text-xs font-bold hover:shadow-md transition">
+          📚 Cenários (+)
+        </button>
+        <!-- Hidden but necessary buttons to prevent script break -->
+        <button id="btn-apply-advanced" class="hidden"></button>
+        <button id="btn-advanced" class="hidden"></button>
+        <button id="btn-close-advanced" class="hidden"></button>
+        <button id="btn-reset-advanced" class="hidden"></button>
+        <button id="btn-history" class="hidden"></button>
+        <button id="btn-capture" class="hidden"></button>
+        <button id="btn-reset" class="hidden"></button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal Equações -->
+  <div id="equations-modal"
+    class="fixed inset-0 z-[100] hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 relative">
+      <button id="btn-close-eq" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+      <h2 class="text-2xl font-bold mb-4 text-mackenzie-green border-b pb-2">Sistema de Equações</h2>
+      <div class="space-y-6 text-sm text-gray-800" id="math-content">
+        <div>
+          <h3 class="font-bold text-red-700 mb-2">Curva IS (Mercado de Bens)</h3>
+          <div>$Y = C + I + G + NX$</div>
+          <div>$C = C_0 + c(Y - T)$</div>
+          <div>$I = I_0 - b \cdot r$</div>
+          <div>$NX = X_0 - m \cdot Y + v \cdot e$ (Em economia aberta)</div>
+        </div>
+        <div>
+          <h3 class="font-bold text-blue-700 mb-2">Curva LM (Mercado Monetário)</h3>
+          <div>$\frac{M}{P} = L(Y, r)$</div>
+          <div>$\frac{M}{P} = k \cdot Y - h \cdot r$</div>
+        </div>
+        <div>
+          <h3 class="font-bold text-purple-700 mb-2">Curva BP (Balanço de Pagamentos)</h3>
+          <div>$BP = NX + CF = 0$</div>
+          <div>$CF = f(r - r^*)$</div>
+          <p class="text-xs text-gray-500 mt-1">Nota: No modelo de Mundell-Fleming básico que usamos para visualização,
+            consideramos mobilidade perfeita (BP horizontal, $r = r^*$) ou imperfeita.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Modal Cenários Expandidos -->
+  <div id="scenarios-expanded-modal"
+    class="fixed inset-0 z-[100] hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto p-6 relative">
+      <button id="btn-close-scenarios-expanded" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+      <h2 class="text-2xl font-bold mb-4 text-green-700 border-b pb-2">📚 Cenários Expandidos - Modelo IS-LM-BP Completo
+      </h2>
+
+      <div class="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <p class="text-sm text-gray-700">
+          <strong>Modelo Expandido:</strong> Inclui todas as variáveis do modelo IS-LM-BP e implementa as 12 simulações
+          detalhadas do
+          "Guia Detalhado de Simulações do Modelo IS-LM-BP". Cada simulação demonstra a eficácia de políticas fiscais e
+          monetárias
+          sob diferentes regimes de câmbio e mobilidade de capitais.
+        </p>
+      </div>
+
+      <!-- Categorias de Cenários -->
+      <div class="space-y-6">
+        <!-- Economia Fechada -->
+        <div>
+          <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+            <span class="w-7 h-7 bg-gray-600 rounded text-white flex items-center justify-center text-sm">🏠</span>
+            Economia Fechada
+          </h3>
+          <div class="grid grid-cols-1 gap-3">
+            <button
+              class="scenario-expanded-btn text-left p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border-2 border-gray-200 hover:border-gray-400 transition"
+              data-scenario="closedEconomy">
+              <div class="font-semibold text-gray-800 mb-1">Economia Fechada - Brasil 2024</div>
+              <div class="text-xs text-gray-600">Modelo IS-LM clássico com dados brasileiros</div>
+            </button>
           </div>
-          <div>
-             <h3 class="font-bold text-blue-700 mb-2">Curva LM (Mercado Monetário)</h3>
-             <div>$\frac{M}{P} = L(Y, r)$</div>
-             <div>$\frac{M}{P} = k \cdot Y - h \cdot r$</div>
+        </div>
+
+        <!-- 2.1 Câmbio Fixo + Sem Mobilidade -->
+        <div>
+          <h3 class="text-lg font-bold text-red-800 mb-3 flex items-center gap-2">
+            <span class="w-7 h-7 bg-red-600 rounded text-white flex items-center justify-center text-sm">2.1</span>
+            Câmbio Fixo + Sem Mobilidade de Capitais
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button
+              class="scenario-expanded-btn text-left p-4 bg-red-50 hover:bg-red-100 rounded-lg border-2 border-red-200 hover:border-red-400 transition"
+              data-scenario="fixedZeroFiscal">
+              <div class="font-semibold text-red-800 mb-1">2.1.1 Política Fiscal</div>
+              <div class="text-xs text-gray-600">EFICAZ: IS direita → Y e i aumentam</div>
+            </button>
+            <button
+              class="scenario-expanded-btn text-left p-4 bg-red-50 hover:bg-red-100 rounded-lg border-2 border-red-200 hover:border-red-400 transition"
+              data-scenario="fixedZeroMonetary">
+              <div class="font-semibold text-red-800 mb-1">2.1.2 Política Monetária</div>
+              <div class="text-xs text-gray-600">INEFICAZ: BC perde reservas, LM volta</div>
+            </button>
           </div>
-          <div>
-             <h3 class="font-bold text-purple-700 mb-2">Curva BP (Balanço de Pagamentos)</h3>
-             <div>$BP = NX + CF = 0$</div>
-             <div>$CF = f(r - r^*)$</div>
-             <p class="text-xs text-gray-500 mt-1">Nota: No modelo de Mundell-Fleming básico que usamos para visualização, consideramos mobilidade perfeita (BP horizontal, $r = r^*$) ou imperfeita.</p>
+        </div>
+
+        <!-- 2.2 Câmbio Flexível + Sem Mobilidade -->
+        <div>
+          <h3 class="text-lg font-bold text-orange-800 mb-3 flex items-center gap-2">
+            <span class="w-7 h-7 bg-orange-600 rounded text-white flex items-center justify-center text-sm">2.2</span>
+            Câmbio Flexível + Sem Mobilidade de Capitais
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button
+              class="scenario-expanded-btn text-left p-4 bg-orange-50 hover:bg-orange-100 rounded-lg border-2 border-orange-200 hover:border-orange-400 transition"
+              data-scenario="floatingZeroFiscal">
+              <div class="font-semibold text-orange-800 mb-1">2.2.1 Política Fiscal</div>
+              <div class="text-xs text-gray-600">EFICAZ: Desvalorização reforça efeito</div>
+            </button>
+            <button
+              class="scenario-expanded-btn text-left p-4 bg-orange-50 hover:bg-orange-100 rounded-lg border-2 border-orange-200 hover:border-orange-400 transition"
+              data-scenario="floatingZeroMonetary">
+              <div class="font-semibold text-orange-800 mb-1">2.2.2 Política Monetária</div>
+              <div class="text-xs text-gray-600">EFICAZ: Desvalorização potencializa</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2.3 Câmbio Fixo + Mobilidade Perfeita -->
+        <div>
+          <h3 class="text-lg font-bold text-blue-800 mb-3 flex items-center gap-2">
+            <span class="w-7 h-7 bg-blue-600 rounded text-white flex items-center justify-center text-sm">2.3</span>
+            Câmbio Fixo + Mobilidade Perfeita
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button
+              class="scenario-expanded-btn text-left p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border-2 border-blue-200 hover:border-blue-400 transition"
+              data-scenario="fixedPerfectFiscal">
+              <div class="font-semibold text-blue-800 mb-1">2.3.1 Política Fiscal</div>
+              <div class="text-xs text-gray-600">MUITO EFICAZ: BC compra dólares, M aumenta</div>
+            </button>
+            <button
+              class="scenario-expanded-btn text-left p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border-2 border-blue-200 hover:border-blue-400 transition"
+              data-scenario="fixedPerfectMonetary">
+              <div class="font-semibold text-blue-800 mb-1">2.3.2 Política Monetária</div>
+              <div class="text-xs text-gray-600">INEFICAZ: Fuga de capital, BC vende dólares</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2.4 Câmbio Flexível + Mobilidade Perfeita -->
+        <div>
+          <h3 class="text-lg font-bold text-green-800 mb-3 flex items-center gap-2">
+            <span class="w-7 h-7 bg-green-600 rounded text-white flex items-center justify-center text-sm">2.4</span>
+            Câmbio Flexível + Mobilidade Perfeita
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button
+              class="scenario-expanded-btn text-left p-4 bg-green-50 hover:bg-green-100 rounded-lg border-2 border-green-200 hover:border-green-400 transition"
+              data-scenario="floatingPerfectFiscal">
+              <div class="font-semibold text-green-800 mb-1">2.4.1 Política Fiscal</div>
+              <div class="text-xs text-gray-600">INEFICAZ: Valorização anula efeito</div>
+            </button>
+            <button
+              class="scenario-expanded-btn text-left p-4 bg-green-50 hover:bg-green-100 rounded-lg border-2 border-green-200 hover:border-green-400 transition"
+              data-scenario="floatingPerfectMonetary">
+              <div class="font-semibold text-green-800 mb-1">2.4.2 Política Monetária</div>
+              <div class="text-xs text-gray-600">MUITO EFICAZ: Desvalorização potencializa</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2.5 Câmbio Fixo + Mobilidade Imperfeita -->
+        <div>
+          <h3 class="text-lg font-bold text-purple-800 mb-3 flex items-center gap-2">
+            <span class="w-7 h-7 bg-purple-600 rounded text-white flex items-center justify-center text-sm">2.5</span>
+            Câmbio Fixo + Mobilidade Imperfeita
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button
+              class="scenario-expanded-btn text-left p-4 bg-purple-50 hover:bg-purple-100 rounded-lg border-2 border-purple-200 hover:border-purple-400 transition"
+              data-scenario="fixedImperfectFiscal">
+              <div class="font-semibold text-purple-800 mb-1">2.5.1 Política Fiscal</div>
+              <div class="text-xs text-gray-600">EFICAZ: Entrada de capital reforça</div>
+            </button>
+            <button
+              class="scenario-expanded-btn text-left p-4 bg-purple-50 hover:bg-purple-100 rounded-lg border-2 border-purple-200 hover:border-purple-400 transition"
+              data-scenario="fixedImperfectMonetary">
+              <div class="font-semibold text-purple-800 mb-1">2.5.2 Política Monetária</div>
+              <div class="text-xs text-gray-600">INEFICAZ: BC anula expansão</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2.6 Câmbio Flexível + Mobilidade Imperfeita -->
+        <div>
+          <h3 class="text-lg font-bold text-indigo-800 mb-3 flex items-center gap-2">
+            <span class="w-7 h-7 bg-indigo-600 rounded text-white flex items-center justify-center text-sm">2.6</span>
+            Câmbio Flexível + Mobilidade Imperfeita
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button
+              class="scenario-expanded-btn text-left p-4 bg-indigo-50 hover:bg-indigo-100 rounded-lg border-2 border-indigo-200 hover:border-indigo-400 transition"
+              data-scenario="floatingImperfectFiscal">
+              <div class="font-semibold text-indigo-800 mb-1">2.6.1 Política Fiscal</div>
+              <div class="text-xs text-gray-600">EFICAZ: Efeito depende de inclinações</div>
+            </button>
+            <button
+              class="scenario-expanded-btn text-left p-4 bg-indigo-50 hover:bg-indigo-100 rounded-lg border-2 border-indigo-200 hover:border-indigo-400 transition"
+              data-scenario="floatingImperfectMonetary">
+              <div class="font-semibold text-indigo-800 mb-1">2.6.2 Política Monetária</div>
+              <div class="text-xs text-gray-600">EFICAZ: Desvalorização reforça</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Choques Externos -->
+        <div>
+          <h3 class="text-lg font-bold text-yellow-800 mb-3 flex items-center gap-2">
+            <span class="w-7 h-7 bg-yellow-600 rounded text-white flex items-center justify-center text-sm">🌍</span>
+            Choques Externos
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button
+              class="scenario-expanded-btn text-left p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg border-2 border-yellow-200 hover:border-yellow-400 transition"
+              data-scenario="externalShockYstar">
+              <div class="font-semibold text-yellow-800 mb-1">Recessão Mundial</div>
+              <div class="text-xs text-gray-600">Y* cai: Exportações caem, IS e BP deslocam</div>
+            </button>
+            <button
+              class="scenario-expanded-btn text-left p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg border-2 border-yellow-200 hover:border-yellow-400 transition"
+              data-scenario="externalShockIstar">
+              <div class="font-semibold text-yellow-800 mb-1">Alta de Juros Fed</div>
+              <div class="text-xs text-gray-600">i* sobe: Fuga de capitais, BP desloca</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Desvalorização Cambial -->
+        <div>
+          <h3 class="text-lg font-bold text-teal-800 mb-3 flex items-center gap-2">
+            <span class="w-7 h-7 bg-teal-600 rounded text-white flex items-center justify-center text-sm">💱</span>
+            Desvalorização Cambial
+          </h3>
+          <div class="grid grid-cols-1 gap-3">
+            <button
+              class="scenario-expanded-btn text-left p-4 bg-teal-50 hover:bg-teal-100 rounded-lg border-2 border-teal-200 hover:border-teal-400 transition"
+              data-scenario="devaluation">
+              <div class="font-semibold text-teal-800 mb-1">Desvalorização de 20%</div>
+              <div class="text-xs text-gray-600">E: 5.0 → 6.0. Exportações aumentam, renda sobe</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Casos Especiais -->
+        <div>
+          <h3 class="text-lg font-bold text-pink-800 mb-3 flex items-center gap-2">
+            <span class="w-7 h-7 bg-pink-600 rounded text-white flex items-center justify-center text-sm">⚠️</span>
+            Casos Especiais
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button
+              class="scenario-expanded-btn text-left p-4 bg-pink-50 hover:bg-pink-100 rounded-lg border-2 border-pink-200 hover:border-pink-400 transition"
+              data-scenario="liquidityTrap">
+              <div class="font-semibold text-pink-800 mb-1">Armadilha da Liquidez</div>
+              <div class="text-xs text-gray-600">LM horizontal: Política monetária ineficaz</div>
+            </button>
+            <button
+              class="scenario-expanded-btn text-left p-4 bg-pink-50 hover:bg-pink-100 rounded-lg border-2 border-pink-200 hover:border-pink-400 transition"
+              data-scenario="investmentInsensitive">
+              <div class="font-semibold text-pink-800 mb-1">Investimento Insensível</div>
+              <div class="text-xs text-gray-600">IS vertical: Política fiscal muito eficaz</div>
+            </button>
           </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Modal Parâmetros Avançados -->
-    <div id="advanced-modal" class="fixed inset-0 z-[100] hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 relative">
-        <button id="btn-close-advanced" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
-        <h2 class="text-2xl font-bold mb-4 text-purple-700 border-b pb-2">⚙️ Parâmetros Avançados do Modelo</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Componentes Autônomos -->
-          <div class="bg-blue-50 p-4 rounded-lg">
-            <h3 class="font-bold text-blue-800 mb-3 flex items-center gap-2">
-              <span class="w-6 h-6 bg-blue-600 rounded text-white flex items-center justify-center text-xs">📊</span>
-              Componentes Autônomos
-            </h3>
-            <div class="space-y-3">
-              <div>
-                <label class="text-xs font-semibold text-gray-700">C0 (Consumo Autônomo)</label>
-                <input type="number" id="param-C0" class="w-full px-2 py-1 border rounded text-sm" value="1500" step="100">
-              </div>
-              <div>
-                <label class="text-xs font-semibold text-gray-700">I0 (Investimento Autônomo)</label>
-                <input type="number" id="param-I0" class="w-full px-2 py-1 border rounded text-sm" value="2000" step="100">
-              </div>
-              <div>
-                <label class="text-xs font-semibold text-gray-700">X0 (Exportações Autônomas)</label>
-                <input type="number" id="param-X0" class="w-full px-2 py-1 border rounded text-sm" value="1500" step="100">
-              </div>
-              <div>
-                <label class="text-xs font-semibold text-gray-700">M0 (Importações Autônomas)</label>
-                <input type="number" id="param-M0" class="w-full px-2 py-1 border rounded text-sm" value="1300" step="100">
-              </div>
-              <div>
-                <label class="text-xs font-semibold text-gray-700">L0 (Demanda Autônoma por Moeda)</label>
-                <input type="number" id="param-L0" class="w-full px-2 py-1 border rounded text-sm" value="0" step="10">
-              </div>
-              <div>
-                <label class="text-xs font-semibold text-gray-700">K0 (Fluxo Autônomo de Capital)</label>
-                <input type="number" id="param-K0" class="w-full px-2 py-1 border rounded text-sm" value="0" step="10">
-              </div>
-            </div>
-          </div>
+  <!-- Main Logic -->
+  <script type="module" src="/src/main-new.js"></script>
 
-          <!-- Parâmetros de Economia Aberta -->
-          <div class="bg-purple-50 p-4 rounded-lg">
-            <h3 class="font-bold text-purple-800 mb-3 flex items-center gap-2">
-              <span class="w-6 h-6 bg-purple-600 rounded text-white flex items-center justify-center text-xs">🌍</span>
-              Economia Aberta
-            </h3>
-            <div class="space-y-3">
-              <div>
-                <label class="text-xs font-semibold text-gray-700">x1 (Sensib. Export. à Renda Externa)</label>
-                <input type="number" id="param-x1" class="w-full px-2 py-1 border rounded text-sm" value="0.15" step="0.01">
-              </div>
-              <div>
-                <label class="text-xs font-semibold text-gray-700">x2 (Sensib. Export. ao Câmbio)</label>
-                <input type="number" id="param-x2" class="w-full px-2 py-1 border rounded text-sm" value="300" step="10">
-              </div>
-              <div>
-                <label class="text-xs font-semibold text-gray-700">m2 (Sensib. Import. ao Câmbio)</label>
-                <input type="number" id="param-m2" class="w-full px-2 py-1 border rounded text-sm" value="200" step="10">
-              </div>
-              <div>
-                <label class="text-xs font-semibold text-gray-700">f (Sensib. Capital aos Juros)</label>
-                <input type="number" id="param-f" class="w-full px-2 py-1 border rounded text-sm" value="100" step="10">
-              </div>
-              <div>
-                <label class="text-xs font-semibold text-gray-700">Y* (Renda Externa)</label>
-                <input type="number" id="param-Ystar" class="w-full px-2 py-1 border rounded text-sm" value="12000" step="100">
-              </div>
-              <div>
-                <label class="text-xs font-semibold text-gray-700">P (Nível de Preços)</label>
-                <input type="number" id="param-P" class="w-full px-2 py-1 border rounded text-sm" value="1.0" step="0.1">
-              </div>
-            </div>
-          </div>
+  <!-- Styles for Header Controls -->
+  <style>
+    /* Styled radio pill buttons */
+    .ctrl-radio {
+      display: none;
+    }
 
-          <!-- Mobilidade de Capital -->
-          <div class="bg-green-50 p-4 rounded-lg">
-            <h3 class="font-bold text-green-800 mb-3 flex items-center gap-2">
-              <span class="w-6 h-6 bg-green-600 rounded text-white flex items-center justify-center text-xs">💰</span>
-              Mobilidade de Capital
-            </h3>
-            <div class="space-y-2">
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="capitalMobility" value="closed" class="text-green-600">
-                <span class="text-sm">Economia Fechada</span>
-              </label>
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="capitalMobility" value="perfect" class="text-green-600" checked>
-                <span class="text-sm">Mobilidade Perfeita (BP horizontal)</span>
-              </label>
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="capitalMobility" value="imperfect" class="text-green-600">
-                <span class="text-sm">Mobilidade Imperfeita (BP inclinada)</span>
-              </label>
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="capitalMobility" value="zero" class="text-green-600">
-                <span class="text-sm">Sem Mobilidade (BP vertical)</span>
-              </label>
-            </div>
-            <div class="mt-4 p-3 bg-white rounded border border-green-200">
-              <p class="text-xs text-gray-600">
-                <strong>Dica:</strong> Mobilidade perfeita: f muito alto (i = i*). Imperfeita: 0 &lt; f &lt; infinito. Sem mobilidade: f = 0.
-              </p>
-            </div>
-          </div>
+    .ctrl-radio-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1.5px solid #d1d5db;
+      background: #fff;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      color: #4b5563;
+      transition: all 0.15s ease;
+      text-align: center;
+      line-height: 1.3;
+      user-select: none;
+      white-space: nowrap;
+    }
 
-          <!-- Botões de Ação -->
-          <div class="bg-gray-50 p-4 rounded-lg flex flex-col gap-3">
-            <h3 class="font-bold text-gray-800 mb-2">Ações</h3>
-            <button id="btn-apply-advanced" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition font-semibold">
-              ✓ Aplicar Parâmetros
-            </button>
-            <button id="btn-reset-advanced" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition font-semibold">
-              🔄 Restaurar Padrões
-            </button>
-            <button id="btn-load-scenario-expanded" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition font-semibold">
-              📚 Cenários Expandidos
-            </button>
-            <div class="mt-4 p-3 bg-yellow-50 rounded border border-yellow-200">
-              <p class="text-xs text-gray-700">
-                <strong>⚠️ Atenção:</strong> Parâmetros avançados afetam diretamente o equilíbrio. Valores inadequados podem gerar resultados inválidos.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    .ctrl-radio-label:hover {
+      border-color: #6b7280;
+      background: #f3f4f6;
+    }
 
-    <!-- Modal Cenários Expandidos -->
-    <div id="scenarios-expanded-modal" class="fixed inset-0 z-[100] hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto p-6 relative">
-        <button id="btn-close-scenarios-expanded" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
-        <h2 class="text-2xl font-bold mb-4 text-green-700 border-b pb-2">📚 Cenários Expandidos - Modelo IS-LM-BP Completo</h2>
-        
-        <div class="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <p class="text-sm text-gray-700">
-            <strong>Modelo Expandido:</strong> Inclui todas as variáveis do modelo IS-LM-BP e implementa as 12 simulações detalhadas do 
-            "Guia Detalhado de Simulações do Modelo IS-LM-BP". Cada simulação demonstra a eficácia de políticas fiscais e monetárias 
-            sob diferentes regimes de câmbio e mobilidade de capitais.
-          </p>
-        </div>
+    .ctrl-radio-label small {
+      font-size: 9px;
+      font-weight: 400;
+      opacity: 0.75;
+      display: block;
+    }
 
-        <!-- Categorias de Cenários -->
-        <div class="space-y-6">
-          <!-- Economia Fechada -->
-          <div>
-            <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-              <span class="w-7 h-7 bg-gray-600 rounded text-white flex items-center justify-center text-sm">🏠</span>
-              Economia Fechada
-            </h3>
-            <div class="grid grid-cols-1 gap-3">
-              <button class="scenario-expanded-btn text-left p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border-2 border-gray-200 hover:border-gray-400 transition" data-scenario="closedEconomy">
-                <div class="font-semibold text-gray-800 mb-1">Economia Fechada - Brasil 2024</div>
-                <div class="text-xs text-gray-600">Modelo IS-LM clássico com dados brasileiros</div>
-              </button>
-            </div>
-          </div>
+    /* Blue accent for MODELO */
+    #header-modelo .ctrl-radio:checked+.ctrl-radio-text,
+    [name="modelType"]:checked+.ctrl-radio-text {
+      /* handled below via label sibling trick is not possible; use JS class instead */
+    }
 
-          <!-- 2.1 Câmbio Fixo + Sem Mobilidade -->
-          <div>
-            <h3 class="text-lg font-bold text-red-800 mb-3 flex items-center gap-2">
-              <span class="w-7 h-7 bg-red-600 rounded text-white flex items-center justify-center text-sm">2.1</span>
-              Câmbio Fixo + Sem Mobilidade de Capitais
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <button class="scenario-expanded-btn text-left p-4 bg-red-50 hover:bg-red-100 rounded-lg border-2 border-red-200 hover:border-red-400 transition" data-scenario="fixedZeroFiscal">
-                <div class="font-semibold text-red-800 mb-1">2.1.1 Política Fiscal</div>
-                <div class="text-xs text-gray-600">EFICAZ: IS direita → Y e i aumentam</div>
-              </button>
-              <button class="scenario-expanded-btn text-left p-4 bg-red-50 hover:bg-red-100 rounded-lg border-2 border-red-200 hover:border-red-400 transition" data-scenario="fixedZeroMonetary">
-                <div class="font-semibold text-red-800 mb-1">2.1.2 Política Monetária</div>
-                <div class="text-xs text-gray-600">INEFICAZ: BC perde reservas, LM volta</div>
-              </button>
-            </div>
-          </div>
+    /* We add .active class via JS */
+    .ctrl-radio-label.active-blue {
+      background: #1d4ed8;
+      border-color: #1d4ed8;
+      color: #fff;
+    }
 
-          <!-- 2.2 Câmbio Flexível + Sem Mobilidade -->
-          <div>
-            <h3 class="text-lg font-bold text-orange-800 mb-3 flex items-center gap-2">
-              <span class="w-7 h-7 bg-orange-600 rounded text-white flex items-center justify-center text-sm">2.2</span>
-              Câmbio Flexível + Sem Mobilidade de Capitais
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <button class="scenario-expanded-btn text-left p-4 bg-orange-50 hover:bg-orange-100 rounded-lg border-2 border-orange-200 hover:border-orange-400 transition" data-scenario="floatingZeroFiscal">
-                <div class="font-semibold text-orange-800 mb-1">2.2.1 Política Fiscal</div>
-                <div class="text-xs text-gray-600">EFICAZ: Desvalorização reforça efeito</div>
-              </button>
-              <button class="scenario-expanded-btn text-left p-4 bg-orange-50 hover:bg-orange-100 rounded-lg border-2 border-orange-200 hover:border-orange-400 transition" data-scenario="floatingZeroMonetary">
-                <div class="font-semibold text-orange-800 mb-1">2.2.2 Política Monetária</div>
-                <div class="text-xs text-gray-600">EFICAZ: Desvalorização potencializa</div>
-              </button>
-            </div>
-          </div>
+    .ctrl-radio-label.active-green {
+      background: #15803d;
+      border-color: #15803d;
+      color: #fff;
+    }
 
-          <!-- 2.3 Câmbio Fixo + Mobilidade Perfeita -->
-          <div>
-            <h3 class="text-lg font-bold text-blue-800 mb-3 flex items-center gap-2">
-              <span class="w-7 h-7 bg-blue-600 rounded text-white flex items-center justify-center text-sm">2.3</span>
-              Câmbio Fixo + Mobilidade Perfeita
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <button class="scenario-expanded-btn text-left p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border-2 border-blue-200 hover:border-blue-400 transition" data-scenario="fixedPerfectFiscal">
-                <div class="font-semibold text-blue-800 mb-1">2.3.1 Política Fiscal</div>
-                <div class="text-xs text-gray-600">MUITO EFICAZ: BC compra dólares, M aumenta</div>
-              </button>
-              <button class="scenario-expanded-btn text-left p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border-2 border-blue-200 hover:border-blue-400 transition" data-scenario="fixedPerfectMonetary">
-                <div class="font-semibold text-blue-800 mb-1">2.3.2 Política Monetária</div>
-                <div class="text-xs text-gray-600">INEFICAZ: Fuga de capital, BC vende dólares</div>
-              </button>
-            </div>
-          </div>
+    .ctrl-radio-label.active-purple {
+      background: #7c3aed;
+      border-color: #7c3aed;
+      color: #fff;
+    }
 
-          <!-- 2.4 Câmbio Flexível + Mobilidade Perfeita -->
-          <div>
-            <h3 class="text-lg font-bold text-green-800 mb-3 flex items-center gap-2">
-              <span class="w-7 h-7 bg-green-600 rounded text-white flex items-center justify-center text-sm">2.4</span>
-              Câmbio Flexível + Mobilidade Perfeita
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <button class="scenario-expanded-btn text-left p-4 bg-green-50 hover:bg-green-100 rounded-lg border-2 border-green-200 hover:border-green-400 transition" data-scenario="floatingPerfectFiscal">
-                <div class="font-semibold text-green-800 mb-1">2.4.1 Política Fiscal</div>
-                <div class="text-xs text-gray-600">INEFICAZ: Valorização anula efeito</div>
-              </button>
-              <button class="scenario-expanded-btn text-left p-4 bg-green-50 hover:bg-green-100 rounded-lg border-2 border-green-200 hover:border-green-400 transition" data-scenario="floatingPerfectMonetary">
-                <div class="font-semibold text-green-800 mb-1">2.4.2 Política Monetária</div>
-                <div class="text-xs text-gray-600">MUITO EFICAZ: Desvalorização potencializa</div>
-              </button>
-            </div>
-          </div>
+    .accent-mackenzie-green {
+      accent-color: #006633;
+    }
+  </style>
+</body>
 
-          <!-- 2.5 Câmbio Fixo + Mobilidade Imperfeita -->
-          <div>
-            <h3 class="text-lg font-bold text-purple-800 mb-3 flex items-center gap-2">
-              <span class="w-7 h-7 bg-purple-600 rounded text-white flex items-center justify-center text-sm">2.5</span>
-              Câmbio Fixo + Mobilidade Imperfeita
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <button class="scenario-expanded-btn text-left p-4 bg-purple-50 hover:bg-purple-100 rounded-lg border-2 border-purple-200 hover:border-purple-400 transition" data-scenario="fixedImperfectFiscal">
-                <div class="font-semibold text-purple-800 mb-1">2.5.1 Política Fiscal</div>
-                <div class="text-xs text-gray-600">EFICAZ: Entrada de capital reforça</div>
-              </button>
-              <button class="scenario-expanded-btn text-left p-4 bg-purple-50 hover:bg-purple-100 rounded-lg border-2 border-purple-200 hover:border-purple-400 transition" data-scenario="fixedImperfectMonetary">
-                <div class="font-semibold text-purple-800 mb-1">2.5.2 Política Monetária</div>
-                <div class="text-xs text-gray-600">INEFICAZ: BC anula expansão</div>
-              </button>
-            </div>
-          </div>
-
-          <!-- 2.6 Câmbio Flexível + Mobilidade Imperfeita -->
-          <div>
-            <h3 class="text-lg font-bold text-indigo-800 mb-3 flex items-center gap-2">
-              <span class="w-7 h-7 bg-indigo-600 rounded text-white flex items-center justify-center text-sm">2.6</span>
-              Câmbio Flexível + Mobilidade Imperfeita
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <button class="scenario-expanded-btn text-left p-4 bg-indigo-50 hover:bg-indigo-100 rounded-lg border-2 border-indigo-200 hover:border-indigo-400 transition" data-scenario="floatingImperfectFiscal">
-                <div class="font-semibold text-indigo-800 mb-1">2.6.1 Política Fiscal</div>
-                <div class="text-xs text-gray-600">EFICAZ: Efeito depende de inclinações</div>
-              </button>
-              <button class="scenario-expanded-btn text-left p-4 bg-indigo-50 hover:bg-indigo-100 rounded-lg border-2 border-indigo-200 hover:border-indigo-400 transition" data-scenario="floatingImperfectMonetary">
-                <div class="font-semibold text-indigo-800 mb-1">2.6.2 Política Monetária</div>
-                <div class="text-xs text-gray-600">EFICAZ: Desvalorização reforça</div>
-              </button>
-            </div>
-          </div>
-
-          <!-- Choques Externos -->
-          <div>
-            <h3 class="text-lg font-bold text-yellow-800 mb-3 flex items-center gap-2">
-              <span class="w-7 h-7 bg-yellow-600 rounded text-white flex items-center justify-center text-sm">🌍</span>
-              Choques Externos
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <button class="scenario-expanded-btn text-left p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg border-2 border-yellow-200 hover:border-yellow-400 transition" data-scenario="externalShockYstar">
-                <div class="font-semibold text-yellow-800 mb-1">Recessão Mundial</div>
-                <div class="text-xs text-gray-600">Y* cai: Exportações caem, IS e BP deslocam</div>
-              </button>
-              <button class="scenario-expanded-btn text-left p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg border-2 border-yellow-200 hover:border-yellow-400 transition" data-scenario="externalShockIstar">
-                <div class="font-semibold text-yellow-800 mb-1">Alta de Juros Fed</div>
-                <div class="text-xs text-gray-600">i* sobe: Fuga de capitais, BP desloca</div>
-              </button>
-            </div>
-          </div>
-
-          <!-- Desvalorização Cambial -->
-          <div>
-            <h3 class="text-lg font-bold text-teal-800 mb-3 flex items-center gap-2">
-              <span class="w-7 h-7 bg-teal-600 rounded text-white flex items-center justify-center text-sm">💱</span>
-              Desvalorização Cambial
-            </h3>
-            <div class="grid grid-cols-1 gap-3">
-              <button class="scenario-expanded-btn text-left p-4 bg-teal-50 hover:bg-teal-100 rounded-lg border-2 border-teal-200 hover:border-teal-400 transition" data-scenario="devaluation">
-                <div class="font-semibold text-teal-800 mb-1">Desvalorização de 20%</div>
-                <div class="text-xs text-gray-600">E: 5.0 → 6.0. Exportações aumentam, renda sobe</div>
-              </button>
-            </div>
-          </div>
-
-          <!-- Casos Especiais -->
-          <div>
-            <h3 class="text-lg font-bold text-pink-800 mb-3 flex items-center gap-2">
-              <span class="w-7 h-7 bg-pink-600 rounded text-white flex items-center justify-center text-sm">⚠️</span>
-              Casos Especiais
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <button class="scenario-expanded-btn text-left p-4 bg-pink-50 hover:bg-pink-100 rounded-lg border-2 border-pink-200 hover:border-pink-400 transition" data-scenario="liquidityTrap">
-                <div class="font-semibold text-pink-800 mb-1">Armadilha da Liquidez</div>
-                <div class="text-xs text-gray-600">LM horizontal: Política monetária ineficaz</div>
-              </button>
-              <button class="scenario-expanded-btn text-left p-4 bg-pink-50 hover:bg-pink-100 rounded-lg border-2 border-pink-200 hover:border-pink-400 transition" data-scenario="investmentInsensitive">
-                <div class="font-semibold text-pink-800 mb-1">Investimento Insensível</div>
-                <div class="text-xs text-gray-600">IS vertical: Política fiscal muito eficaz</div>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Main Logic -->
-    <script type="module" src="/src/main-new.js"></script>
-    
-    <!-- Styles for Toggle Switches -->
-    <style>
-      #model-toggle:checked ~ .dot { transform: translateX(100%); }
-      #model-toggle:checked ~ .toggle-bg { background-color: #006633; }
-      
-      #exchange-toggle:checked ~ .dot { transform: translateX(1.5rem); }
-      #exchange-toggle:checked ~ .toggle-bg-sm { background-color: #006633; }
-      
-      .accent-mackenzie-green { accent-color: #006633; }
-    </style>
-  </body>
 </html>

@@ -62,13 +62,13 @@ const updateApp = debounce((source = null, direction = null) => {
       dataIS = getISData(state.params, state.isOpenEconomy, eq.e_eq);
       dataLM = getLMData(state.params, eq.M_eq);
       
-      // BP só existe em economia aberta
-      if (state.isOpenEconomy) {
-        console.log('Generating BP with mobility:', state.capitalMobility, 'params:', state.params);
-        dataBP = getBPData(state.params.rstar, state.capitalMobility, state.params);
-        console.log('BP data points:', dataBP.length, 'first point:', dataBP[0]);
+      // BP curve: only shown in IS-LM-BP mode
+      const showBP = state.showBP !== false && state.isOpenEconomy;
+      if (showBP) {
+        console.log('Generating BP with mobility:', state.capitalMobility);
+        dataBP = getBPData(state.params.rstar, state.capitalMobility, state.params, eq.e_eq);
       } else {
-        dataBP = []; // Economia fechada não tem BP
+        dataBP = []; // IS-LM (Fechada or Aberta without BP)
       }
     }
     
@@ -114,7 +114,7 @@ const updateApp = debounce((source = null, direction = null) => {
         initialData = {
           dataIS: getISData(initialState.params, initialState.isOpenEconomy, initialEq.e_eq),
           dataLM: getLMData(initialState.params, initialEq.M_eq),
-          dataBP: initialState.isOpenEconomy ? getBPData(initialState.params.rstar, initialState.capitalMobility, initialState.params) : []
+          dataBP: initialState.isOpenEconomy ? getBPData(initialState.params.rstar, initialState.capitalMobility, initialState.params, initialEq.e_eq) : []
         };
       }
     }
@@ -135,6 +135,7 @@ const updateApp = debounce((source = null, direction = null) => {
       direction,
       isOpenEconomy: state.isOpenEconomy,
       isFloatingRate: state.isFloatingRate,
+      capitalMobility: state.capitalMobility,
       scenario: state.currentScenario ? getScenario(state.currentScenario) : null,
       equilibrium: eq,
       params: state.params
@@ -177,14 +178,15 @@ const updateApp = debounce((source = null, direction = null) => {
 function setupEventListeners() {
   // Slider inputs
   Object.keys(uiController.sliders).forEach(key => {
-    uiController.sliders[key].addEventListener('input', () => {
-      const newValue = parseFloat(uiController.sliders[key].value);
+    const slider = uiController.sliders[key];
+    if (!slider) return; // guard against missing elements
+    slider.addEventListener('input', () => {
+      const newValue = parseFloat(slider.value);
       const oldValue = stateManager.getState().params[key];
       const direction = newValue > oldValue ? 'up' : 'down';
-      
       stateManager.updateParams({ [key]: newValue });
       uiController.updateDisplay(key, newValue);
-      updateApp(key, direction); // Pass direction based on value change
+      updateApp(key, direction);
     });
   });
   
@@ -226,19 +228,70 @@ function setupEventListeners() {
     });
   });
 
-  // Model toggle (Closed/Open economy)
-  uiController.toggleModel.addEventListener('change', (e) => {
-    stateManager.setEconomyType(e.target.checked);
+  // ═══════════════════════════════════════════════════════
+  // HEADER CONTROLS — Model, Mobility, Exchange Rate
+  // ═══════════════════════════════════════════════════════
+
+  function setGroupActive(groupId, active) {
+    const el = document.getElementById(groupId);
+    if (!el) return;
+    el.style.opacity        = active ? '1'    : '0.35';
+    el.style.pointerEvents  = active ? 'auto' : 'none';
+  }
+
+  function highlightRadios(name, cls) {
+    document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
+      const label = radio.closest('label');
+      if (label) label.classList.toggle(cls, radio.checked);
+    });
+  }
+
+  function applyModelType(value) {
+    const isOpen = value === 'islmbp';
+    const showBP = value === 'islmbp';
+    const isFloating = stateManager.getState().isFloatingRate; // respect current exchange selection
+
+    stateManager.setEconomyType(isOpen);
+    stateManager.state.showBP = showBP;
+
+    // Dim/activate sub-groups
+    setGroupActive('mob-group',      showBP);
+    setGroupActive('exchange-group', showBP);
+
+    highlightRadios('modelType', 'active-blue');
     uiController.updateFromState(stateManager.getState());
     updateApp('toggles');
+  }
+
+  // Model radios
+  document.querySelectorAll('input[name="modelType"]').forEach(radio => {
+    radio.addEventListener('change', e => applyModelType(e.target.value));
   });
 
-  // Exchange rate regime toggle
-  uiController.toggleExchange.addEventListener('change', (e) => {
-    stateManager.setExchangeRegime(e.target.checked);
-    uiController.updateFromState(stateManager.getState());
-    updateApp('toggles');
+  // Exchange rate radios
+  document.querySelectorAll('input[name="exchangeRegime"]').forEach(radio => {
+    radio.addEventListener('change', e => {
+      stateManager.setExchangeRegime(e.target.value === 'floating');
+      highlightRadios('exchangeRegime', 'active-purple');
+      uiController.updateFromState(stateManager.getState());
+      updateApp('toggles');
+    });
   });
+
+  // Mobility radios
+  document.querySelectorAll('input[name="capitalMobility"]').forEach(radio => {
+    radio.addEventListener('change', e => {
+      stateManager.setCapitalMobility(e.target.value);
+      highlightRadios('capitalMobility', 'active-green');
+      updateApp('mobility');
+    });
+  });
+
+  // Apply initial state
+  stateManager.state.showBP = true;
+  applyModelType('islmbp');
+  highlightRadios('capitalMobility', 'active-green');
+  highlightRadios('exchangeRegime', 'active-purple');
 
   // Reset button
   document.getElementById('btn-reset').addEventListener('click', () => {
@@ -249,14 +302,14 @@ function setupEventListeners() {
   });
 
   // Capture button - captura estado atual como referência
-  document.getElementById('btn-capture').addEventListener('click', () => {
+  document.getElementById('btn-capture')?.addEventListener('click', () => {
     stateManager.resetInitialState();
     updateApp();
     uiController.showNotification('Estado atual capturado como referência', 'success');
   });
 
   // Export button (Professor mode)
-  document.getElementById('btn-export').addEventListener('click', () => {
+  document.getElementById('btn-export')?.addEventListener('click', () => {
     html2canvas(document.getElementById('graph-container'), {
       backgroundColor: '#ffffff'
     }).then(canvas => {
@@ -279,18 +332,18 @@ function setupEventListeners() {
   });
 
   // Advanced parameters modal
-  document.getElementById('btn-advanced').addEventListener('click', () => {
-    document.getElementById('advanced-modal').classList.remove('hidden');
+  document.getElementById('btn-advanced')?.addEventListener('click', () => {
+    document.getElementById('advanced-modal')?.classList.remove('hidden');
     loadAdvancedParams();
   });
 
-  document.getElementById('btn-close-advanced').addEventListener('click', () => {
-    document.getElementById('advanced-modal').classList.add('hidden');
+  document.getElementById('btn-close-advanced')?.addEventListener('click', () => {
+    document.getElementById('advanced-modal')?.classList.add('hidden');
   });
 
-  document.getElementById('btn-apply-advanced').addEventListener('click', () => {
+  document.getElementById('btn-apply-advanced')?.addEventListener('click', () => {
     applyAdvancedParams();
-    document.getElementById('advanced-modal').classList.add('hidden');
+    document.getElementById('advanced-modal')?.classList.add('hidden');
     
     // Log do estado antes de updateApp
     const stateBeforeUpdate = stateManager.getState();
@@ -303,14 +356,14 @@ function setupEventListeners() {
     uiController.showNotification('Parâmetros avançados aplicados', 'success');
   });
 
-  document.getElementById('btn-reset-advanced').addEventListener('click', () => {
+  document.getElementById('btn-reset-advanced')?.addEventListener('click', () => {
     resetAdvancedParams();
     loadAdvancedParams();
     uiController.showNotification('Parâmetros restaurados aos padrões', 'success');
   });
 
-  document.getElementById('btn-load-scenario-expanded').addEventListener('click', () => {
-    document.getElementById('advanced-modal').classList.add('hidden');
+  document.getElementById('btn-load-scenario-expanded')?.addEventListener('click', () => {
+    document.getElementById('advanced-modal')?.classList.add('hidden');
     document.getElementById('scenarios-expanded-modal').classList.remove('hidden');
   });
 
@@ -329,15 +382,15 @@ function setupEventListeners() {
   });
 
   // New feature buttons
-  document.getElementById('btn-scenarios').addEventListener('click', () => {
+  document.getElementById('btn-scenarios')?.addEventListener('click', () => {
     modalManager.show('scenarios');
   });
 
-  document.getElementById('btn-history').addEventListener('click', () => {
+  document.getElementById('btn-history')?.addEventListener('click', () => {
     modalManager.show('history');
   });
 
-  document.getElementById('btn-help').addEventListener('click', () => {
+  document.getElementById('btn-help')?.addEventListener('click', () => {
     modalManager.show('help');
   });
 
@@ -347,10 +400,10 @@ function setupEventListeners() {
     
     switch(e.key.toLowerCase()) {
       case 'r':
-        document.getElementById('btn-reset').click();
+        document.getElementById('btn-reset')?.click();
         break;
       case 'c':
-        document.getElementById('btn-capture').click();
+        document.getElementById('btn-capture')?.click();
         break;
       case 's':
         modalManager.show('scenarios');
@@ -359,13 +412,15 @@ function setupEventListeners() {
         modalManager.show('history');
         break;
       case 'e':
-        document.getElementById('btn-equations').click();
+        document.getElementById('btn-equations')?.click();
         break;
       case '?':
         modalManager.show('help');
         break;
     }
   });
+
+  // (Capital mobility is handled in applyModelType section above)
 }
 
 /**
@@ -589,7 +644,8 @@ function init() {
     }
   }
   
-  // Initial update
+  // Initial update — default to IS-LM-BP mode (showBP = true)
+  stateManager.state.showBP = true;
   updateApp();
   
   // Render math after short delay
