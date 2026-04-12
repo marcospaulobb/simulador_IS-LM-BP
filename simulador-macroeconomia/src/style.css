@@ -153,6 +153,37 @@ button:focus-visible, input[type=range]:focus-visible {
   .control-group-enhanced-small {
     @apply text-sm;
   }
+  
+  /* Garantir altura mínima do gráfico para legibilidade */
+  #macroChart {
+    min-height: 280px;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Sliders maiores para touch no mobile */
+  input[type=range]::-webkit-slider-thumb {
+    @apply h-6 w-6;
+    margin-top: -8px;
+  }
+  
+  input[type=range]::-moz-range-thumb {
+    @apply h-6 w-6;
+  }
+  
+  /* Ajuste de grid do painel lateral quando empilhado */
+  #pane-auto .grid-cols-2 {
+    @apply grid-cols-1;
+  }
+  
+  #pane-open .grid-cols-2 {
+    @apply grid-cols-1;
+  }
+
+  /* Reduzir padding do cabeçalho */
+  header div.w-full {
+    @apply py-2 px-1;
+  }
 }
 
 
