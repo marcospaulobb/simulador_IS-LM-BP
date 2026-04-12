@@ -113,22 +113,22 @@ As imagens fornecidas confirmam o padrão de cores:
 | k | 0.50 | Sensibilidade da demanda por moeda à renda |
 | h | 60 | Sensibilidade da demanda por moeda a i |
 | rstar | 15.00% | Taxa de juros externa (Selic Brasil) |
-| E | 3.20 | Taxa de câmbio (Equilíbrio centralizado) |
+| E | 1.75 | Taxa de câmbio (Equilíbrio centralizado) |
 | M | 1.750 | Oferta nominal de moeda |
-| G | 3.200 | Gastos do governo |
-| T | 3.500 | Tributação |
+| G | 1.500 | Gastos do governo |
+| T | 3.000 | Tributação |
 | X0 | 1.500 | Exportações autônomas |
 | M0 | 1.300 | Importações autônomas |
-| m1 | 0.25 | Propensão marginal a importar |
+| m1 | 0.30 | Propensão marginal a importar |
+| f | 100/1000/0| Mobilidade de capitais (ajustável) |
 
 ---
 
 ## 🚧 Próximas Melhorias Sugeridas
 
 - [ ] Animação de deslocamento de curva (IS₁ → IS₂ com seta visível no gráfico)
-- [ ] Painel didático lateral mostrando o "passo a passo" do mecanismo de transmissão
-- [ ] Exportar gráfico como imagem PNG/SVG para uso em slides
-- [ ] Otimizar chunk size (build > 500 kB — usar `rollupOptions.output.manualChunks`)
+- [ ] Exportação em PDF com o relatório da simulação formatado em LaTeX.
+- [ ] Implementação de Gráfico de Balanço de Pagamentos (Curva de Reservas) como visualização auxiliar.
 
 ---
 
@@ -136,11 +136,8 @@ As imagens fornecidas confirmam o padrão de cores:
 
 | Arquivo | Tipo de Mudança |
 |---|---|
-| `index.html` | Cabeçalho redesenhado: 2 modelos + Mobilidade + Câmbio |
-| `src/main-new.js` | Listeners limpos, calibração de parâmetros e ativação do Modelo Expandido. |
-| `src/model-expanded.js` | Implementação de Solvers Analíticos e sincronização de sinais (NX, BP, L0). |
-| `src/model.js` | Clipping para range visível e tratamento de mobilidade nula. |
-| `src/chart.js` | Eixos fixos e renderização otimizada do ponto de equilíbrio. |
-| `src/ui/UIController.js` | Sincronização de inputs e sliders com estado endógeno. |
-| `src/ui/ExplanationEngine.js` | Explicações dinâmicas para 6 regimes + fallback para Mobilidade Nula. |
-| `src/state/StateManager.js` | Gerenciamento de aliases e ranges de validação ampliados. |
+| `index.html` | Inserção da 3ª caixa explicativa e inputs de parâmetros autônomos. |
+| `src/main-new.js` | Refatoração para leitura segura de inputs e integração das novas explicações. |
+| `src/ui/ExplanationEngine.js`| Implementação da teoria detalhada de regimes e drivers de economia aberta. |
+| `src/ui/UIController.js` | Controle de visibilidade e animação da caixa `open-economy-text`. |
+| `src/model-expanded.js` | Estabilização dos solvers analíticos para evitar divisões por zero em f=0. |
